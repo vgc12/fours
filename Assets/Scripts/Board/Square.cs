@@ -9,6 +9,7 @@ namespace Board
     {
         [SerializeField] private Color color;
         public SpriteRenderer spriteRenderer;
+        public Vector2Int id;
 
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -19,6 +20,7 @@ namespace Board
             spriteRenderer.color =  new Color(Random.Range(0.1f, 1.0f), Random.Range(0.1f, 1.0f), Random.Range(0.1f, 1.0f), 1f);
         
 
+         
         
         
 
@@ -29,7 +31,7 @@ namespace Board
 
         private void Update()
         {
-       
+            gameObject.name = $"Square{id}";
         }
     }
 }

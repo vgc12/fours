@@ -40,6 +40,9 @@ namespace Board
             await RotateAsync(SpriteGrid.RotationDirection.Clockwise);
             
             var temp = TopLeft;
+            var tempName = TopLeft.gameObject.name;
+            
+            
             TopLeft = BottomLeft;
             BottomLeft = BottomRight;
             BottomRight = TopRight;

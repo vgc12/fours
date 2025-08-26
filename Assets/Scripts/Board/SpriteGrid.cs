@@ -71,13 +71,15 @@ public class RotatingState : BaseState
         await _grid.selectedDot.squareGroup.RotateClockwise();
 
         _grid.UpdateGridWithGroup(_grid.selectedDot.squareGroup);
+
+        _grid.ArrangeGrid();
         _grid.FindGroups();
 
         _grid.rotating = false;
         
-        _grid.PrintAllGroups();
+      
 
-       
+       _grid.PrintAllGroups();
     }
 }
 
@@ -97,7 +99,7 @@ namespace Board
 
         [Header("Debug")] [SerializeField] private bool showGizmos = true;
 
-        private Square[] _squares;
+        private List<Square> _squares;
 
         private Square[,] _grid;
 
@@ -142,7 +144,7 @@ namespace Board
             _squareGroups = new List<SquareGroup>();
 
 
-            _squares = GetComponentsInChildren<Square>();
+          
 
             ArrangeGrid();
             FindGroups();
@@ -151,7 +153,13 @@ namespace Board
 
             _stateMachine.SetState(idleState);
         }
-
+        
+        public void GetChildSquares()
+        {
+            _squares = GetComponentsInChildren<Square>().OrderBy(s => s.name).ToList();
+            
+        }
+        
         public void InitializeDots()
         {
             if (_dots != null)
@@ -209,9 +217,10 @@ namespace Board
         [ContextMenu("Arrange Grid")]
         public void ArrangeGrid()
         {
+            GetChildSquares();
             CreateGridArray();
 
-            if (_squares.Length == 0)
+            if (_squares.Count == 0)
             {
                 Debug.LogWarning("No child sprites found to arrange in grid.");
                 return;
@@ -232,17 +241,19 @@ namespace Board
         }
 
 
-        private void CreateGridArray()
+        public void CreateGridArray()
         {
-            _totalRows = Mathf.CeilToInt((float)_squares.Length / columnsPerRow);
+            _totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
             _grid = new Square[_totalRows, columnsPerRow];
 
-            for (var i = 0; i < _squares.Length; i++)
+            for (var i = 0; i < _squares.Count; i++)
             {
                 var row = i / columnsPerRow;
                 var column = i % columnsPerRow;
                 _grid[row, column] = _squares[i];
+                _squares[i].id = new(row, column);
             }
+            GetChildSquares();
         }
 
 
@@ -402,9 +413,9 @@ namespace Board
         {
             Vector2 startPos = transform.position;
 
-            if (centerGrid && _squares.Length > 0)
+            if (centerGrid && _squares.Count > 0)
             {
-                var totalRows = Mathf.CeilToInt((float)_squares.Length / columnsPerRow);
+                var totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
 
 
                 var gridWidth = (columnsPerRow - 1) * spacing.x;
@@ -449,9 +460,9 @@ namespace Board
 
         public Vector2 GetGridSize()
         {
-            if (_squares.Length == 0) return Vector2.zero;
+            if (_squares.Count == 0) return Vector2.zero;
 
-            var totalRows = Mathf.CeilToInt((float)_squares.Length / columnsPerRow);
+            var totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
             return new Vector2(
                 (columnsPerRow - 1) * spacing.x,
                 (totalRows - 1) * spacing.y
@@ -497,16 +508,16 @@ namespace Board
             if (!showGizmos) return;
 
 
-            if (_squares.Length == 0) return;
+            if (_squares.Count == 0) return;
 
             // Draw grid preview
             Gizmos.color = Color.yellow;
             var startPos = CalculateStartPosition();
 
-            var totalRows = Mathf.CeilToInt((float)_squares.Length / columnsPerRow);
+            var totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
 
             // Draw grid points
-            for (var i = 0; i < _squares.Length; i++)
+            for (var i = 0; i < _squares.Count; i++)
             {
                 var row = i / columnsPerRow;
                 var column = i % columnsPerRow;
