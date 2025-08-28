@@ -9,7 +9,7 @@ namespace Board
     {
         [SerializeField] private Color color;
         public SpriteRenderer spriteRenderer;
-        public Vector2Int id;
+        public GridIndex id;
 
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created

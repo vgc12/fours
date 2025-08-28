@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using UnityEngine;
 
 namespace Board
@@ -15,6 +16,8 @@ namespace Board
         {
             _board = new Square[4,4]; 
             var squares = GetComponentsInChildren<Square>();
+
+            
             for (int i = 0; i < _board.GetLength(0); i++)
             {
                 for (int j = 0; j < _board.GetLength(1); j++)

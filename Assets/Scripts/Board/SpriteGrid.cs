@@ -1,225 +1,378 @@
 using System;
-using System.Collections;
+
 using System.Collections.Generic;
 using System.Linq;
-using Board;
-using EventChannel;
-using StateMachines;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class IdleState : BaseState
-{
-    private readonly SpriteGrid grid;
-
-    public IdleState(SpriteGrid grid)
-    {
-        this.grid = grid;
-    }
-
-    public override void Enter()
-    {
-        grid.ArrangeGrid();
-        grid.PrintGrid();
-    }
-}
-
-public class SelectedState : BaseState
-{
-    private readonly SpriteGrid _grid;
-
-    public SelectedState(SpriteGrid grid)
-    {
-        _grid = grid;
-    }
-
-    public override void Enter()
-    {
-       
-        _grid.PrintGrid();
-    }
-
-    public override void Update()
-    {
-    }
-}
-
-public readonly struct GridIndex
-{
-    public readonly int Row;
-    public readonly int Column;
-
-    public GridIndex(int row, int column)
-    {
-        Row = row;
-        Column = column;
-    }
-}
-
-
-public class RotatingState : BaseState
-{
-    private readonly SpriteGrid _grid;
-
-    public RotatingState(SpriteGrid grid)
-    {
-        _grid = grid;
-    }
-
-    public override async void Enter()
-    {
-        await _grid.selectedDot.squareGroup.RotateClockwise();
-
-        _grid.UpdateGridWithGroup(_grid.selectedDot.squareGroup);
-
-        _grid.ArrangeGrid();
-        _grid.FindGroups();
-
-        _grid.rotating = false;
-        
-      
-
-       _grid.PrintAllGroups();
-    }
-}
-
+using StateMachines;
 
 namespace Board
 {
-    public class SpriteGrid : MonoBehaviour
+    // Simplified data structure
+    public readonly struct GridIndex
     {
-        [Header("Grid Settings")] [SerializeField]
-        private Vector2 spacing = new Vector2(1f, 1f);
+        public readonly int Row;
+        public readonly int Column;
 
-        [Min(1)] [SerializeField] private int columnsPerRow = 5;
-
-
-        [Header("Alignment")] [SerializeField] private bool centerGrid = true;
-        [SerializeField] private Vector2 gridOffset = Vector2.zero;
-
-        [Header("Debug")] [SerializeField] private bool showGizmos = true;
-
-        private List<Square> _squares;
-
-        private Square[,] _grid;
-
-        private List<SquareGroup> _squareGroups;
-
-        private List<Dot> _dots;
-
-        private int _totalRows;
-
-        public bool rotating;
-
-        private StateMachine _stateMachine;
-
-        public Dot selectedDot;
-
-
-        private PlayerInputActions _playerInputActions;
-
-
-        private EventBinding<SquareGroupRotatedEvent> _rotatedEvent;
-
-        private void Start()
+        public GridIndex(int row, int column)
         {
-            _playerInputActions = new PlayerInputActions();
-            _playerInputActions.UI.Enable();
-            _playerInputActions.UI.Click.canceled += OnClick;
-
-            //_rotatedEvent = new EventBinding<SquareGroupRotatedEvent>(() => rotating = false)
-
-            var idleState = new IdleState(this);
-            var selectedState = new SelectedState(this);
-            var rotatingState = new RotatingState(this);
-
-            _stateMachine = new StateMachine();
-            _stateMachine.AddTransition(idleState, selectedState, new FuncPredicate(() => selectedDot));
-
-            _stateMachine.AddTransition(selectedState, idleState, new FuncPredicate(() => !selectedDot));
-            _stateMachine.AddTransition(selectedState, rotatingState, new FuncPredicate(() => rotating));
-
-            _stateMachine.AddTransition(rotatingState, selectedState, new FuncPredicate(() => !rotating));
-
-            _squareGroups = new List<SquareGroup>();
-
-
-          
-
-            ArrangeGrid();
-            FindGroups();
-            InitializeDots();
-
-
-            _stateMachine.SetState(idleState);
+            Row = row;
+            Column = column;
         }
+
+        public override string ToString() => $"({Row}, {Column})";
+    }
+
+    // Grid configuration
+    [Serializable]
+    public class GridConfig
+    {
+        [Header("Grid Settings")]
+        public Vector2 spacing = new Vector2(1f, 1f);
+        [Min(1)] public int columnsPerRow = 5;
         
-        public void GetChildSquares()
+        [Header("Alignment")]
+        public bool centerGrid = true;
+        public Vector2 gridOffset = Vector2.zero;
+        
+        [Header("Debug")]
+        public bool showGizmos = true;
+    }
+
+    // Handles grid layout and positioning
+    public class GridLayout
+    {
+        private readonly GridConfig _config;
+        private readonly Transform _gridTransform;
+
+        public GridLayout(GridConfig config, Transform gridTransform)
         {
-            _squares = GetComponentsInChildren<Square>().OrderBy(s => s.name).ToList();
-            
+            _config = config;
+            _gridTransform = gridTransform;
         }
-        
-        public void InitializeDots()
+
+        public Vector2 CalculateStartPosition(int totalSquares)
         {
-            if (_dots != null)
+            Vector2 startPos = _gridTransform.position;
+
+            if (_config.centerGrid && totalSquares > 0)
             {
-                foreach (var dot in _dots)
-                {
-                    
-                    Destroy(dot.gameObject);
-                    
-                }
+                var totalRows = Mathf.CeilToInt((float)totalSquares / _config.columnsPerRow);
+                var gridWidth = (_config.columnsPerRow - 1) * _config.spacing.x;
+                var gridHeight = (totalRows - 1) * _config.spacing.y;
+
+                startPos.x -= gridWidth * 0.5f;
+                startPos.y += gridHeight * 0.5f;
             }
 
-            _dots = new List<Dot>(20);
-            foreach (var squareGroup in _squareGroups)
+            return startPos + _config.gridOffset;
+        }
+
+        public Vector3 CalculateGridPosition(int row, int column, Vector2 startPosition, float zPosition = 0)
+        {
+            return new Vector3(
+                startPosition.x + (column * _config.spacing.x),
+                startPosition.y - (row * _config.spacing.y),
+                zPosition
+            );
+        }
+
+        public Vector2 GetGridSize(int totalSquares)
+        {
+            if (totalSquares == 0) return Vector2.zero;
+
+            var totalRows = Mathf.CeilToInt((float)totalSquares / _config.columnsPerRow);
+            return new Vector2(
+                (_config.columnsPerRow - 1) * _config.spacing.x,
+                (totalRows - 1) * _config.spacing.y
+            );
+        }
+    }
+
+    // Manages the 2D array of squares
+    public class GridData
+    {
+        private Square[,] _grid;
+        private int _totalRows;
+        private int _columnsPerRow;
+
+        public int TotalRows => _totalRows;
+        public int ColumnsPerRow => _columnsPerRow;
+
+        public void Initialize(List<Square> squares, int columnsPerRow)
+        {
+            _columnsPerRow = columnsPerRow;
+            _totalRows = Mathf.CeilToInt((float)squares.Count / columnsPerRow);
+            _grid = new Square[_totalRows, columnsPerRow];
+
+            for (var i = 0; i < squares.Count; i++)
+            {
+                var row = i / columnsPerRow;
+                var column = i % columnsPerRow;
+                _grid[row, column] = squares[i];
+                squares[i].id = new GridIndex(row, column);
+            }
+        }
+
+        public Square GetSquare(int row, int column)
+        {
+            if (_grid == null || row < 0 || row >= _totalRows || column < 0 || column >= _columnsPerRow)
+                return null;
+
+            return _grid[row, column];
+        }
+
+        public void SetSquare(int row, int column, Square square)
+        {
+            if (_grid != null && row >= 0 && row < _totalRows && column >= 0 && column < _columnsPerRow)
+            {
+                _grid[row, column] = square;
+            }
+        }
+
+        public void UpdateWithGroup(SquareGroup group)
+        {
+            var topLeftRow = group.TopLeftIndex.Row;
+            var topLeftColumn = group.TopLeftIndex.Column;
+
+            if (!ValidGroupAt(topLeftRow, topLeftColumn)) return;
+
+            SetSquare(topLeftRow, topLeftColumn, group.TopLeft);
+            SetSquare(topLeftRow, topLeftColumn + 1, group.TopRight);
+            SetSquare(topLeftRow + 1, topLeftColumn + 1, group.BottomRight);
+            SetSquare(topLeftRow + 1, topLeftColumn, group.BottomLeft);
+        }
+
+        public bool ValidGroupAt( int row, int col)
+        {
+            return _grid[row, col] &&
+                   _grid[row, col + 1] &&
+                   _grid[row + 1, col] &&
+                   _grid[row + 1, col + 1];
+        }
+
+
+        public string GetDebugString()
+        {
+            if (_grid == null) return "Grid is null";
+
+            var gridString = "Grid Layout:\n";
+            for (var row = 0; row < _totalRows; row++)
+            {
+                for (var col = 0; col < _columnsPerRow; col++)
+                {
+                    var square = _grid[row, col];
+                    gridString += (square != null ? square.name : "null") + "\t";
+                }
+                gridString += "\n";
+            }
+            return gridString;
+        }
+    }
+
+    // Handles input detection and conversion
+    public class GridInputHandler
+    {
+        private readonly Camera _camera;
+        private readonly LayerMask _dotLayerMask;
+
+        public GridInputHandler(Camera camera, LayerMask dotLayerMask)
+        {
+            _camera = camera;
+            _dotLayerMask = dotLayerMask;
+        }
+
+        public Dot GetDotAtScreenPosition(Vector2 screenPosition)
+        {
+            Vector2 worldPosition = _camera.ScreenToWorldPoint(screenPosition);
+            var hit = Physics2D.OverlapCircle(worldPosition, 0.1f, _dotLayerMask);
+            return hit?.GetComponent<Dot>();
+        }
+    }
+
+    // Manages dot creation and lifecycle
+    public class DotManager
+    {
+        private List<Dot> _dots = new List<Dot>();
+
+        public IReadOnlyList<Dot> Dots => _dots;
+
+        public void CreateDots(List<SquareGroup> squareGroups)
+        {
+            ClearDots();
+            
+            _dots = new List<Dot>(squareGroups.Count);
+            foreach (var squareGroup in squareGroups)
             {
                 var dot = DotFactory.Instance.CreateDot(squareGroup);
                 _dots.Add(dot);
             }
         }
 
-
-        public void FindGroups()
+        public void ResetDots(List<SquareGroup> squareGroups)
         {
-            _squareGroups = GridGroupFinder.SplitGridIntoGroups(_grid);
+            for (var i = 0; i < _dots.Count && i < squareGroups.Count; i++)
+            {
+                _dots[i].squareGroup = squareGroups[i];
+            }
+        }
+
+        private void ClearDots()
+        {
+            if (_dots == null) return;
+            foreach (var dot in _dots)
+            {
+                if (dot != null && dot.gameObject != null)
+                {
+                    UnityEngine.Object.Destroy(dot.gameObject);
+                }
+            }
+        }
+    }
+
+    // State machine states
+    public class IdleState : BaseState
+    {
+        private readonly SpriteGrid _grid;
+
+        public IdleState(SpriteGrid grid)
+        {
+            _grid = grid;
+        }
+
+        public override void Enter()
+        {
+            Debug.Log(_grid.GetGridDebugString());
+        }
+    }
+
+    public class SelectedState : BaseState
+    {
+        private readonly SpriteGrid _grid;
+
+        public SelectedState(SpriteGrid grid)
+        {
+            _grid = grid;
+        }
+
+        public override void Enter()
+        {
+            Debug.Log(_grid.GetGridDebugString());
+        }
+    }
+
+    public class RotatingState : BaseState
+    {
+        private readonly SpriteGrid _grid;
+
+        public RotatingState(SpriteGrid grid)
+        {
+            _grid = grid;
+        }
+
+        public override async void Enter()
+        {
+            await _grid.ExecuteRotation();
+        }
+    }
+
+    // Main grid controller - much cleaner now
+    public class SpriteGrid : MonoBehaviour
+    {
+        [SerializeField] private GridConfig _config = new GridConfig();
+
+        private List<Square> _squares;
+        private GridData _gridData;
+        private GridLayout _gridLayout;
+        private GridInputHandler _inputHandler;
+        private DotManager _dotManager;
+        private StateMachine _stateMachine;
+        private PlayerInputActions _playerInputActions;
+        private List<SquareGroup> _squareGroups;
+
+        public Dot SelectedDot { get; private set; }
+        public bool IsRotating { get; private set; }
+
+        private void Start()
+        {
+            InitializeComponents();
+            InitializeInput();
+            InitializeStateMachine();
+            InitializeGrid();
+            FindGroups();
+            _dotManager.CreateDots(_squareGroups);
+            
+            _stateMachine.SetState(new IdleState(this));
+        }
+
+        private void InitializeComponents()
+        {
+            _gridData = new GridData();
+            _gridLayout = new GridLayout(_config, transform);
+            _inputHandler = new GridInputHandler(Camera.main, LayerMask.GetMask("Dot"));
+            _dotManager = new DotManager();
+            _squareGroups = new List<SquareGroup>();
+        }
+
+        private void InitializeInput()
+        {
+            _playerInputActions = new PlayerInputActions();
+            _playerInputActions.UI.Enable();
+            _playerInputActions.UI.Click.canceled += OnClick;
+        }
+
+        private void InitializeStateMachine()
+        {
+            var idleState = new IdleState(this);
+            var selectedState = new SelectedState(this);
+            var rotatingState = new RotatingState(this);
+
+            _stateMachine = new StateMachine();
+            _stateMachine.AddTransition(idleState, selectedState, new FuncPredicate(() => SelectedDot != null));
+            _stateMachine.AddTransition(selectedState, idleState, new FuncPredicate(() => SelectedDot == null));
+            _stateMachine.AddTransition(selectedState, rotatingState, new FuncPredicate(() => IsRotating));
+            _stateMachine.AddTransition(rotatingState, selectedState, new FuncPredicate(() => !IsRotating));
         }
 
         private void OnClick(InputAction.CallbackContext obj)
         {
-        
             Vector2 mousePosition = Input.mousePosition;
-            Vector2 worldPosition = Camera.main.ScreenToWorldPoint(mousePosition);
-            var hit = Physics2D.OverlapCircle(worldPosition, .1f, LayerMask.GetMask("Dot"));
+            var clickedDot = _inputHandler.GetDotAtScreenPosition(mousePosition);
 
-            if (selectedDot)
+            if (SelectedDot != null)
             {
-                rotating = true;
+                IsRotating = true;
             }
 
-            selectedDot = hit != null ? hit.GetComponent<Dot>() : null;
+            SelectedDot = clickedDot;
         }
 
-
-        private void Update()
+        public async Task ExecuteRotation()
         {
-            _stateMachine.Update();
+            if (SelectedDot?.squareGroup == null) return;
+
+            await SelectedDot.squareGroup.RotateClockwise();
+            _gridData.UpdateWithGroup(SelectedDot.squareGroup);
+            FindGroups();
+            IsRotating = false;
+            _dotManager.ResetDots(_squareGroups);
+            
+            Debug.Log(GetAllGroupsDebugString());
         }
 
-        private void OnValidate()
+        public void FindGroups()
         {
-            PrintGrid();
-            if (Application.isPlaying) return;
-            ArrangeGrid();
+            _squareGroups = GridGroupFinder.SplitGridIntoGroups(_gridData);
         }
 
         [ContextMenu("Arrange Grid")]
-        public void ArrangeGrid()
+        public void InitializeGrid()
         {
             GetChildSquares();
-            CreateGridArray();
-
+            _gridData.Initialize(_squares, _config.columnsPerRow);
+            
             if (_squares.Count == 0)
             {
                 Debug.LogWarning("No child sprites found to arrange in grid.");
@@ -229,316 +382,90 @@ namespace Board
             ArrangeSpritesInGrid();
         }
 
-        public void ScaleSelectedGroup(float scale, float offset = .2f)
+        private void GetChildSquares()
         {
-            if (selectedDot == null) return;
-            var sg = selectedDot.squareGroup;
-
-            sg.TopLeft.transform.localScale.Set(scale, scale, scale);
-            sg.TopRight.transform.localScale.Set(scale, scale, scale);
-            sg.BottomLeft.transform.localScale.Set(scale, scale, scale);
-            sg.BottomRight.transform.localScale.Set(scale, scale, scale);
-        }
-
-
-        public void CreateGridArray()
-        {
-            _totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
-            _grid = new Square[_totalRows, columnsPerRow];
-
-            for (var i = 0; i < _squares.Count; i++)
-            {
-                var row = i / columnsPerRow;
-                var column = i % columnsPerRow;
-                _grid[row, column] = _squares[i];
-                _squares[i].id = new(row, column);
-            }
-            GetChildSquares();
-        }
-
-
-        public void RotateGroup(int row, int column, Vector3 centerPosition, RotationDirection direction)
-        {
-            if (_grid == null) return;
-
-            if (row < 0 || row >= _totalRows - 1 ||
-                column < 0 || column >= columnsPerRow - 1)
-            {
-                Debug.LogWarning("Invalid top-left corner for rotation.");
-                return;
-            }
-
-            // Store references to the squares in the 2x2 block
-            var topLeft = _grid[row, column];
-            var topRight = _grid[row, column + 1];
-            var bottomRight = _grid[row + 1, column + 1];
-            var bottomLeft = _grid[row + 1, column];
-
-
-            StartCoroutine(RotateSpritesInGrid(centerPosition,
-                new[] { topLeft.transform, topRight.transform, bottomRight.transform, bottomLeft.transform }, 200));
-
-
-            if (direction == RotationDirection.Clockwise)
-            {
-                _grid[row, column] = topRight;
-                _grid[row, column + 1] = bottomRight;
-                _grid[row + 1, column + 1] = bottomLeft;
-                _grid[row + 1, column] = topLeft;
-            }
-            else
-            {
-                _grid[row, column] = bottomLeft;
-                _grid[row, column + 1] = topLeft;
-                _grid[row + 1, column + 1] = topRight;
-                _grid[row + 1, column] = bottomRight;
-            }
-
-            ArrangeSpritesInGrid();
-        }
-
-
-        public void UpdateGridWithGroup(SquareGroup group)
-        {
-            if (_grid == null) return;
-
-            var topLeftRow = group.TopLeftIndex.Row;
-            var topLeftColumn = group.TopLeftIndex.Column;
-
-            if (topLeftRow < 0 || topLeftRow >= _totalRows - 1 ||
-                topLeftColumn < 0 || topLeftColumn >= columnsPerRow - 1)
-            {
-                Debug.LogWarning("Invalid top-left corner for rotation.");
-                return;
-            }
-
-            _grid[topLeftRow, topLeftColumn] = group.TopLeft;
-            _grid[topLeftRow, topLeftColumn + 1] = group.TopRight;
-            _grid[topLeftRow + 1, topLeftColumn + 1] = group.BottomRight;
-            _grid[topLeftRow + 1, topLeftColumn] = group.BottomLeft;
-        }
-
-
-        public enum RotationDirection
-        {
-            Clockwise = -1,
-            CounterClockwise = 1
-        }
-
-        private IEnumerator RotateSpritesInGrid(Vector3 rotationPoint, Transform[] transforms, float speed,
-            RotationDirection direction = RotationDirection.Clockwise)
-        {
-            var totalDegrees = 90f * (int)direction;
-
-            var rotatedDegrees = 0f;
-
-            rotating = true;
-            while (Mathf.Abs(rotatedDegrees) < Mathf.Abs(totalDegrees))
-            {
-                var rotationThisFrame = speed * Time.deltaTime * (int)direction;
-
-                // Make sure we don't overshoot
-                if (Mathf.Abs(rotatedDegrees + rotationThisFrame) > Mathf.Abs(totalDegrees))
-                {
-                    rotationThisFrame = totalDegrees - rotatedDegrees;
-                }
-
-                foreach (var t in transforms)
-                {
-                    t.RotateAround(rotationPoint, Vector3.forward, rotationThisFrame);
-                }
-
-                rotatedDegrees += rotationThisFrame;
-
-                yield return null;
-            }
-
-            rotating = false;
-        }
-
-        public Square GetSquareAt(int row, int column)
-        {
-            if (_grid == null || row < 0 || row >= _totalRows || column < 0 || column >= columnsPerRow)
-            {
-                return null;
-            }
-
-            return _grid[row, column];
+            _squares = GetComponentsInChildren<Square>().OrderBy(s => s.name).ToList();
         }
 
         private void ArrangeSpritesInGrid()
         {
-            var startPosition = CalculateStartPosition();
+            if (IsRotating) return;
 
-            if (rotating) return;
+            var startPosition = _gridLayout.CalculateStartPosition(_squares.Count);
 
-            for (var row = 0; row < _grid.GetLength(0); row++)
+            for (var row = 0; row < _gridData.TotalRows; row++)
             {
-                for (var column = 0; column < _grid.GetLength(1); column++)
+                for (var column = 0; column < _gridData.ColumnsPerRow; column++)
                 {
-                    var square = _grid[row, column];
+                    var square = _gridData.GetSquare(row, column);
                     if (square == null) continue;
 
-                    var targetPosition = new Vector3(
-                        startPosition.x + (column * spacing.x),
-                        startPosition.y - (row * spacing.y),
-                        square.transform.position.z
-                    );
-
+                    var targetPosition = _gridLayout.CalculateGridPosition(row, column, startPosition, square.transform.position.z);
                     square.transform.position = targetPosition;
                 }
             }
         }
 
-        public void PrintGrid()
+        private void Update()
         {
-            if (_grid == null) return;
-
-            var gridString = "Grid Layout:\n";
-            for (var row = 0; row < _totalRows; row++)
-            {
-                for (var col = 0; col < columnsPerRow; col++)
-                {
-                    var square = _grid[row, col];
-                    gridString += (square != null ? square.name : "null") + "\t";
-                }
-
-                gridString += "\n";
-            }
-
-            Debug.Log(gridString);
+            _stateMachine?.Update();
         }
 
-        private Vector2 CalculateStartPosition()
+        private void OnValidate()
         {
-            Vector2 startPos = transform.position;
-
-            if (centerGrid && _squares.Count > 0)
-            {
-                var totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
-
-
-                var gridWidth = (columnsPerRow - 1) * spacing.x;
-                var gridHeight = (totalRows - 1) * spacing.y;
-
-                // Center the grid
-                startPos.x -= gridWidth * 0.5f;
-                startPos.y += gridHeight * 0.5f;
-            }
-
-            // Apply offset
-            startPos += gridOffset;
-
-            return startPos;
+            if (Application.isPlaying) return;
+            InitializeGrid();
         }
 
-        // Utility methods for runtime control
-        public void SetSpacing(Vector2 newSpacing)
-        {
-            spacing = newSpacing;
-            ArrangeGrid();
-        }
+        // Public interface methods
+        public string GetGridDebugString() => _gridData?.GetDebugString() ?? "Grid not initialized";
 
-        public void SetColumnsPerRow(int columns)
-        {
-            columnsPerRow = Mathf.Max(1, columns);
-            ArrangeGrid();
-        }
-
-        public void SetGridOffset(Vector2 offset)
-        {
-            gridOffset = offset;
-            ArrangeGrid();
-        }
-
-        public void ToggleCenterGrid(bool center)
-        {
-            centerGrid = center;
-            ArrangeGrid();
-        }
-
-
-        public Vector2 GetGridSize()
-        {
-            if (_squares.Count == 0) return Vector2.zero;
-
-            var totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
-            return new Vector2(
-                (columnsPerRow - 1) * spacing.x,
-                (totalRows - 1) * spacing.y
-            );
-        }
-
-
-        public void PrintAllGroups()
+        public string GetAllGroupsDebugString()
         {
             if (_squareGroups == null || _squareGroups.Count == 0)
-            {
-                Debug.Log("No groups found.");
-                return;
-            }
+                return "No groups found.";
 
+            var result = "";
             for (var i = 0; i < _squareGroups.Count; i++)
             {
                 var group = _squareGroups[i];
-                Debug.Log(
-                    $"Group {i}: TopLeft({group.TopLeft.name}), TopRight({group.TopRight.name}), BottomLeft({group.BottomLeft.name}), BottomRight({group.BottomRight.name}) at Index({group.TopLeftIndex.Row}, {group.TopLeftIndex.Column})");
+                result += $"Group {i}: TopLeft({group.TopLeft.name}), TopRight({group.TopRight.name}), " +
+                         $"BottomLeft({group.BottomLeft.name}), BottomRight({group.BottomRight.name}) " +
+                         $"at Index{group.TopLeftIndex}\n";
             }
+            return result;
         }
 
-        public void DebugGrid()
-        {
-            Debug.Log($"Total Squares: {_grid.Length}, Total Rows: {_totalRows}, Columns Per Row: {columnsPerRow}");
-
-            for (var row = 0; row < _totalRows; row++)
-            {
-                for (var column = 0; column < columnsPerRow; column++)
-                {
-                    var square = GetSquareAt(row, column);
-                    if (square != null)
-                    {
-                        Debug.Log($"Square at ({row}, {column}): {square.name}");
-                    }
-                }
-            }
-        }
+        public Vector2 GetGridSize() => _gridLayout.GetGridSize(_squares?.Count ?? 0);
+        
 
         private void OnDrawGizmos()
         {
-            if (!showGizmos) return;
+            if (!_config.showGizmos || _squares == null || _squares.Count == 0) return;
 
-
-            if (_squares.Count == 0) return;
-
-            // Draw grid preview
             Gizmos.color = Color.yellow;
-            var startPos = CalculateStartPosition();
-
-            var totalRows = Mathf.CeilToInt((float)_squares.Count / columnsPerRow);
+            var startPos = _gridLayout.CalculateStartPosition(_squares.Count);
 
             // Draw grid points
             for (var i = 0; i < _squares.Count; i++)
             {
-                var row = i / columnsPerRow;
-                var column = i % columnsPerRow;
-
-                var gridPoint = new Vector3(
-                    startPos.x + (column * spacing.x),
-                    startPos.y - (row * spacing.y),
-                    transform.position.z
-                );
-
+                var row = i / _config.columnsPerRow;
+                var column = i % _config.columnsPerRow;
+                var gridPoint = _gridLayout.CalculateGridPosition(row, column, startPos, transform.position.z);
                 Gizmos.DrawWireCube(gridPoint, Vector3.one * 0.2f);
             }
 
-
+            // Draw grid bounds
             Gizmos.color = Color.green;
             var gridSize = GetGridSize();
-            var center = new Vector3(startPos.x + gridSize.x * 0.5f, startPos.y - gridSize.y * 0.5f,
-                transform.position.z);
-            Gizmos.DrawWireCube(center, new Vector3(gridSize.x + spacing.x, gridSize.y + spacing.y, 0));
+            var center = new Vector3(startPos.x + gridSize.x * 0.5f, startPos.y - gridSize.y * 0.5f, transform.position.z);
+            Gizmos.DrawWireCube(center, new Vector3(gridSize.x + _config.spacing.x, gridSize.y + _config.spacing.y, 0));
         }
 
-    
+        private void OnDestroy()
+        {
+            _playerInputActions.UI.Click.canceled -= OnClick;
+            _playerInputActions?.Dispose();
+        }
     }
 }

@@ -37,11 +37,9 @@ namespace Board
 
         public async Task RotateClockwise()
         {
-            await RotateAsync(SpriteGrid.RotationDirection.Clockwise);
+            await RotateAsync(RotationDirection.Clockwise);
             
             var temp = TopLeft;
-            var tempName = TopLeft.gameObject.name;
-            
             
             TopLeft = BottomLeft;
             BottomLeft = BottomRight;
@@ -53,7 +51,7 @@ namespace Board
         }
 
         
-        public async Task RotateAsync( SpriteGrid.RotationDirection direction)
+        public async Task RotateAsync( RotationDirection direction)
         {
             
             var totalDegrees = 90f * (int)direction;
