@@ -61,7 +61,7 @@ namespace Board
       
             while (Mathf.Abs(rotatedDegrees) < Mathf.Abs(totalDegrees))
             {
-                float rotationThisFrame = 200 * Time.deltaTime * (int)direction;
+                var rotationThisFrame = 200 * Time.deltaTime * (int)direction;
 
                 if (Mathf.Abs(rotatedDegrees + rotationThisFrame) > Mathf.Abs(totalDegrees))
                 {
@@ -83,8 +83,11 @@ namespace Board
   
         }
 
-   
-    
+
+        public async Task RotateCounterClockwise()
+        {
+            await RotateAsync(RotationDirection.CounterClockwise);
+        }
     }
     
     
