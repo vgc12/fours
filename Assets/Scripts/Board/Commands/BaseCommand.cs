@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace Board
+namespace Board.Commands
 {
     public abstract class BaseCommand : ICommand
     {
