@@ -2,7 +2,7 @@
 
 namespace Board
 {
-    public class GridLayout
+    public sealed class GridLayout
     {
         private readonly GridConfig _config;
         private readonly Transform _gridTransform;

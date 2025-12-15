@@ -1,4 +1,4 @@
-﻿using StateMachines;
+﻿using StateMachine;
 using UnityEngine;
 
 namespace Board

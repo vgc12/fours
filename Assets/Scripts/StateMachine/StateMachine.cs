@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace StateMachines
+namespace StateMachine
 {
     public class StateMachine
     {

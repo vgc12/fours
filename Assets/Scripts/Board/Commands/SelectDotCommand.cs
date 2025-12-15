@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Board.Commands;
 using UnityEngine;
 
-namespace Board
+namespace Board.Commands
 {
-    public class SelectDotCommand : BaseCommand
+    public sealed class SelectDotCommand : BaseCommand
     {
         private readonly SpriteGrid _grid;
         private readonly Dot _dotToSelect;

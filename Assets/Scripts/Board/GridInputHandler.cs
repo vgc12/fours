@@ -2,7 +2,7 @@
 
 namespace Board
 {
-    public class GridInputHandler
+    public sealed class GridInputHandler
     {
         private readonly Camera _camera;
         private readonly LayerMask _dotLayerMask;

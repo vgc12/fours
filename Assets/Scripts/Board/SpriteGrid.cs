@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Board.Commands;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 
 namespace Board
 {
-    public class SpriteGrid : MonoBehaviour
+    public sealed class SpriteGrid : MonoBehaviour
     {
         [SerializeField] private GridConfig config = new GridConfig();
 
@@ -162,14 +163,17 @@ namespace Board
         }
         private void Start()
         {
+            InitializeGridSystem();
+        }
+
+        private void InitializeGridSystem()
+        {
             InitializeComponents();
             InitializeCommandSystem(); 
             InitializeInput();
             InitializeGrid();
             FindGroups();
             _dotManager.CreateDots(_squareGroups);
-            
-            
         }
 
         private void InitializeComponents()
@@ -232,28 +236,13 @@ namespace Board
                 }
             }
         }
-
-        private void Update()
-        {
-            if (IsRotating)
-            {
-                
-                return;
-            }
-    
-            if (SelectedDot != null)
-            {
-                
-                return;
-            }
-    
-           
-        }
+        
 
         private void OnValidate()
         {
             if (Application.isPlaying) return;
-            InitializeGrid();
+            
+            InitializeGridSystem();
         }
 
         // Public interface methods

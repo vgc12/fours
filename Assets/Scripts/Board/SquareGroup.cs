@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Board
 {
-    public class SquareGroup
+    public sealed class SquareGroup
     {
 
         public GUID Id;

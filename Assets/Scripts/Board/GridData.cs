@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Board
 {
-    public class GridData
+    public sealed class GridData
     {
         private Square[,] _grid;
         private int _totalRows;
@@ -23,7 +23,7 @@ namespace Board
                 var row = i / columnsPerRow;
                 var column = i % columnsPerRow;
                 _grid[row, column] = squares[i];
-                squares[i].id = new GridIndex(row, column);
+                squares[i].ID = new GridIndex(row, column);
             }
         }
 

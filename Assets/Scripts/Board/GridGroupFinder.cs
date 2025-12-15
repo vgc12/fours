@@ -1,7 +1,5 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using EventChannel;
-using UnityEngine;
+﻿using System.Collections.Generic;
+using EventBus;
 
 namespace Board
 {
@@ -40,11 +38,9 @@ namespace Board
 
     }
 
- 
-}
 
-
-internal class SquareGroupRotatedEvent : IEvent
-{
+    internal class SquareGroupRotatedEvent : IEvent
+    {
   
+    }
 }

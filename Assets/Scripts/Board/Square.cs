@@ -5,11 +5,14 @@ using UnityEngine.UI;
 namespace Board
 {
     [RequireComponent(typeof(SpriteRenderer))]
-    public class Square : MonoBehaviour
+    public sealed class Square : MonoBehaviour
     {
         [SerializeField] private Color color;
         public SpriteRenderer spriteRenderer;
-        public GridIndex id;
+        public GridIndex ID;
+        [SerializeField] private bool inactive;
+        public bool Inactive {get => inactive;
+            set {inactive = value; spriteRenderer.enabled = !value;}}
 
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -31,7 +34,7 @@ namespace Board
 
         private void Update()
         {
-            gameObject.name = $"Square{id}";
+            gameObject.name = $"Square{ID}";
         }
     }
 }

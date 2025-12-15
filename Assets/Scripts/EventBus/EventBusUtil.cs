@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
-namespace EventChannel
+namespace EventBus
 {
     public static class EventBusUtil{
         public static IReadOnlyList<Type> EventTypes { get; private set; }

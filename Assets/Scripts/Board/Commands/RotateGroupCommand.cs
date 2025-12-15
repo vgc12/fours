@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
-using Board.Commands;
 using UnityEngine;
 
-namespace Board
+namespace Board.Commands
 {
-    public class RotateGroupCommand : BaseCommand
+    public sealed class RotateGroupCommand : BaseCommand
     {
         private readonly SquareGroup _squareGroup;
         private readonly GridData _gridData;

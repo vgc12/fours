@@ -1,9 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using Board.Commands;
 using UnityEngine;
 
-namespace Board
+namespace Board.Commands
 {
     public class MacroCommand : BaseCommand
     {

@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Board
+namespace Board.Commands
 {
-    public class CommandManager
+    public sealed class CommandManager
     {
         private readonly Stack<ICommand> _undoStack;
         private readonly Stack<ICommand> _redoStack;

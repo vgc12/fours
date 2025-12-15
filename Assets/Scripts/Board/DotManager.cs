@@ -2,7 +2,7 @@
 
 namespace Board
 {
-    public class DotManager
+    public sealed class DotManager
     {
         private List<Dot> _dots = new List<Dot>();
 
