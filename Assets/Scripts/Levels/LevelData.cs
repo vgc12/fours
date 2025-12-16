@@ -1,84 +1,130 @@
-// LevelData.cs - ScriptableObject to store level configurations
+// LevelData.cs - Enhanced with initial and target grid states
 
 using System.Collections.Generic;
+using Board;
 using UnityEngine;
 
 namespace Levels
 {
-      [CreateAssetMenu(fileName = "NewLevel", menuName = "Board/Level Data")]
-    public class LevelData : ScriptableObject
+    [CreateAssetMenu(fileName = "NewLevel", menuName = "Board/Level Data")]
+    public sealed class LevelData : ScriptableObject
     {
         [System.Serializable]
         public class SquareData
         {
-            public int row;
-            public int column;
+            public GridIndex Id { get; }
             public Color color;
-            public bool isActive = true; // Whether this square participates in gameplay
+            public bool inactive ;
             
-            public SquareData(int r, int c, Color col, bool active = true)
+            public SquareData (int row, int column, Color col, bool inactive = false)
             {
-                row = r;
-                column = c;
+                Id = new GridIndex(row, column);
                 color = col;
-                isActive = active;
+                this.inactive = inactive;
+            }
+            
+            public SquareData(GridIndex id, Color col, bool inactive = false)
+            {
+                Id = id;
+                color = col;
+                this.inactive = inactive;
+            }
+            
+            public SquareData Clone()
+            {
+                return new SquareData(Id.Row, Id.Column, color, inactive);
             }
         }
         
         public int rows = 4;
         public int columns = 4;
-        public List<SquareData> squares = new List<SquareData>();
         
-        public void Clear()
+        // Initial grid state (starting configuration)
+        public List<SquareData> initialSquares = new List<SquareData>();
+        
+        // Target grid state (goal configuration)
+        public List<SquareData> targetSquares = new List<SquareData>();
+        
+        public void Clear(bool clearInitial = true, bool clearTarget = true)
         {
-            squares.Clear();
+            if (clearInitial) initialSquares.Clear();
+            if (clearTarget) targetSquares.Clear();
         }
         
-        public void AddSquare(int row, int column, Color color, bool isActive = true)
+        public void AddSquare(int row, int column, Color color, bool inactive, bool isTarget)
         {
-            squares.RemoveAll(s => s.row == row && s.column == column);
-            squares.Add(new SquareData(row, column, color, isActive));
+            var list = isTarget ? targetSquares : initialSquares;
+            list.RemoveAll(s => s.Id.Row == row && s.Id.Column == column);
+            list.Add(new SquareData(row, column, color, inactive));
         }
         
-        public void RemoveSquare(int row, int column)
+        public void RemoveSquare(int row, int column, bool isTarget)
         {
-            squares.RemoveAll(s => s.row == row && s.column == column);
+            var list = isTarget ? targetSquares : initialSquares;
+            list.RemoveAll(s => s.Id.Row == row && s.Id.Column == column);
         }
         
-        public SquareData GetSquare(int row, int column)
+        public SquareData GetSquare(int row, int column, bool isTarget)
         {
-            return squares.Find(s => s.row == row && s.column == column);
+            var list = isTarget ? targetSquares : initialSquares;
+            return list.Find(s => s.Id.Row == row && s.Id.Column == column);
         }
         
-        public bool HasSquare(int row, int column)
+        public bool HasSquare(int row, int column, bool isTarget)
         {
-            return GetSquare(row, column) != null;
+            return GetSquare(row, column, isTarget) != null;
         }
         
-        // Get all squares including inactive ones (for grid creation)
-        public List<SquareData> GetAllSquares()
+        public List<SquareData> GetAllSquares(bool isTarget)
         {
-            return new List<SquareData>(squares);
+            var list = isTarget ? targetSquares : initialSquares;
+            return new List<SquareData>(list);
         }
         
-        // Get only active squares (for gameplay logic)
-        public List<SquareData> GetActiveSquares()
+        public List<SquareData> GetActiveSquares(bool isTarget)
         {
-            return squares.FindAll(s => s.isActive);
+            var list = isTarget ? targetSquares : initialSquares;
+            return list.FindAll(s => !s.inactive);
         }
         
-        // Fill empty positions with inactive squares to maintain rectangular grid
-        public void FillWithInactiveSquares(Color inactiveColor)
+        public void FillWithInactiveSquares(Color inactiveColor, bool applyToInitial, bool applyToTarget)
+        {
+            if (applyToInitial)
+                FillListWithInactive(initialSquares, inactiveColor);
+            
+            if (applyToTarget)
+                FillListWithInactive(targetSquares, inactiveColor);
+        }
+        
+        private void FillListWithInactive(List<SquareData> list, Color inactiveColor)
         {
             for (int row = 0; row < rows; row++)
             {
                 for (int col = 0; col < columns; col++)
                 {
-                    if (!HasSquare(row, col))
+                    if (!list.Exists(s => (s.Id.Row == row && s.Id.Column == col) || s.inactive)) 
                     {
-                        AddSquare(row, col, inactiveColor, false);
+                        list.Add(new SquareData(row, col, inactiveColor, true) );
                     }
                 }
+            }
+        }
+        
+        public void CopyInitialToTarget()
+        {
+            targetSquares.Clear();
+            foreach (var square in initialSquares)
+            {
+                targetSquares.Add(square.Clone());
+            }
+        }
+        
+        public void CopyTargetToInitial()
+        {
+            initialSquares.Clear();
+            foreach (var square in targetSquares)
+            {
+                initialSquares.Add(square.Clone());
             }
         }
     }

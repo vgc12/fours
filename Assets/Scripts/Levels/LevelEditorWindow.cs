@@ -1,11 +1,12 @@
-﻿#if UNITY_EDITOR
+﻿
+#if UNITY_EDITOR
 using Board;
 using UnityEditor;
 using UnityEngine;
 
 namespace Levels
 {
-  public sealed class LevelEditorWindow : EditorWindow
+    public sealed class LevelEditorWindow : EditorWindow
     {
         private LevelData _currentLevel;
         private Vector2 _scrollPosition;
@@ -19,10 +20,21 @@ namespace Levels
         private bool _isDragging;
         private bool _isErasing;
         
+        // Grid editing mode
+        private enum EditMode { Initial, Target, Both }
+        private EditMode _editMode = EditMode.Initial;
+        
         // Inactive square settings
         private Color _inactiveSquareColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
         private bool _showInactiveSquares = true;
-        private bool _fillEmptyWithInactive = true;
+        private bool _fillEmptyWithInactive = false;
+        
+        // Foldout states
+        private bool _showLevelSettings = true;
+        private bool _showGridSettings = true;
+        private bool _showEditMode = true;
+        private bool _showInactiveSettings = false;
+        private bool _showColorPalette = true;
         
         // Color palette
         private readonly Color[] _colorPalette = {
@@ -39,7 +51,8 @@ namespace Levels
         [MenuItem("Tools/Board/Level Editor")]
         public static void ShowWindow()
         {
-            GetWindow<LevelEditorWindow>("Level Editor");
+            var window = GetWindow<LevelEditorWindow>("Level Editor");
+            window.minSize = new Vector2(500, 600);
         }
         
         private void OnEnable()
@@ -54,109 +67,212 @@ namespace Levels
         
         private void OnGUI()
         {
-            EditorGUILayout.Space(10);
+            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
+            
+            EditorGUILayout.Space(5);
             EditorGUILayout.LabelField("Level Editor", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
             
-            DrawToolbar();
-            EditorGUILayout.Space(10);
+            DrawLevelSettings();
+            DrawGridSettings();
+            DrawEditModeSettings();
             DrawInactiveSquareSettings();
-            EditorGUILayout.Space(10);
             DrawColorPalette();
-            EditorGUILayout.Space(10);
-            
-            _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
-            DrawGrid();
-            EditorGUILayout.EndScrollView();
-            
-            EditorGUILayout.Space(10);
+            DrawGrids();
             DrawActions();
+            
+            EditorGUILayout.Space(10);
+            EditorGUILayout.EndScrollView();
         }
         
-        private void DrawToolbar()
+        private void DrawLevelSettings()
         {
+            _showLevelSettings = EditorGUILayout.Foldout(_showLevelSettings, "Level Settings", true);
+            if (!_showLevelSettings) return;
+            
             EditorGUILayout.BeginVertical("box");
             
-            EditorGUILayout.LabelField("Level Settings", EditorStyles.boldLabel);
             _currentLevel = (LevelData)EditorGUILayout.ObjectField("Current Level", _currentLevel, typeof(LevelData), false);
             
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("New Level"))
+            if (GUILayout.Button("New Level", GUILayout.Height(25)))
             {
                 CreateNewLevel();
             }
-            if (GUILayout.Button("Load Level") && _currentLevel != null)
+            if (GUILayout.Button("Load Level", GUILayout.Height(25)) && _currentLevel != null)
             {
                 LoadLevel();
             }
             EditorGUILayout.EndHorizontal();
             
-            EditorGUILayout.Space(5);
+            if (_currentLevel != null)
+            {
+                int initialActive = _currentLevel.GetActiveSquares(false).Count;
+                int initialTotal = _currentLevel.initialSquares.Count;
+                int targetActive = _currentLevel.GetActiveSquares(true).Count;
+                int targetTotal = _currentLevel.targetSquares.Count;
+                
+                EditorGUILayout.HelpBox(
+                    $"Initial - Active: {initialActive} | Total: {initialTotal}\n" +
+                    $"Target - Active: {targetActive} | Total: {targetTotal}", 
+                    MessageType.None);
+            }
             
-            EditorGUILayout.LabelField("Grid Settings", EditorStyles.boldLabel);
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
+        }
+        
+        private void DrawGridSettings()
+        {
+            _showGridSettings = EditorGUILayout.Foldout(_showGridSettings, "Grid Settings", true);
+            if (!_showGridSettings) return;
+            
+            EditorGUILayout.BeginVertical("box");
+            
             _gridRows = EditorGUILayout.IntSlider("Rows", _gridRows, 2, 10);
             _gridColumns = EditorGUILayout.IntSlider("Columns", _gridColumns, 2, 10);
-            _cellSize = EditorGUILayout.Slider("Cell Size", _cellSize, 30f, 100f);
+            _cellSize = EditorGUILayout.Slider("Cell Size", _cellSize, 25f, 60f);
             
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(3);
             
             _squarePrefab = (GameObject)EditorGUILayout.ObjectField("Square Prefab", _squarePrefab, typeof(GameObject), false);
             _targetGrid = (SpriteGrid)EditorGUILayout.ObjectField("Target Grid", _targetGrid, typeof(SpriteGrid), true);
             
             EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
+        }
+        
+        private void DrawEditModeSettings()
+        {
+            _showEditMode = EditorGUILayout.Foldout(_showEditMode, "Edit Mode", true);
+            if (!_showEditMode) return;
+            
+            EditorGUILayout.BeginVertical("box");
+            
+            _editMode = (EditMode)EditorGUILayout.EnumPopup("Editing", _editMode);
+            
+            EditorGUILayout.HelpBox(
+                "Initial: Starting grid state\n" +
+                "Target: Goal grid state\n" +
+                "Both: Edit both grids simultaneously",
+                MessageType.Info);
+            
+            // Copy buttons
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Copy Initial → Target", GUILayout.Height(25)))
+            {
+                if (_currentLevel != null)
+                {
+                    _currentLevel.CopyInitialToTarget();
+                    EditorUtility.SetDirty(_currentLevel);
+                }
+            }
+            if (GUILayout.Button("Copy Target → Initial", GUILayout.Height(25)))
+            {
+                if (_currentLevel != null)
+                {
+                    _currentLevel.CopyTargetToInitial();
+                    EditorUtility.SetDirty(_currentLevel);
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
         }
         
         private void DrawInactiveSquareSettings()
         {
+            _showInactiveSettings = EditorGUILayout.Foldout(_showInactiveSettings, "Inactive Square Settings", true);
+            if (!_showInactiveSettings) return;
+            
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Inactive Square Settings", EditorStyles.boldLabel);
             
             _fillEmptyWithInactive = EditorGUILayout.Toggle("Fill Empty with Inactive", _fillEmptyWithInactive);
             _showInactiveSquares = EditorGUILayout.Toggle("Show Inactive Squares", _showInactiveSquares);
-            _inactiveSquareColor = EditorGUILayout.ColorField("Inactive Square Color", _inactiveSquareColor);
+            _inactiveSquareColor = EditorGUILayout.ColorField("Inactive Color", _inactiveSquareColor);
             
             EditorGUILayout.HelpBox(
-                "Inactive squares maintain grid structure but don't participate in gameplay. " +
-                "Enable 'Fill Empty with Inactive' to automatically create them when applying to scene.",
+                "Inactive squares maintain grid structure but don't participate in gameplay.",
                 MessageType.Info);
             
             EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
         }
         
         private void DrawColorPalette()
         {
+            _showColorPalette = EditorGUILayout.Foldout(_showColorPalette, "Color Palette", true);
+            if (!_showColorPalette) return;
+            
             EditorGUILayout.BeginVertical("box");
-            EditorGUILayout.LabelField("Color Palette", EditorStyles.boldLabel);
             
-            EditorGUILayout.BeginHorizontal();
-            for (int i = 0; i < _colorPalette.Length; i++)
+            int buttonsPerRow = 4;
+            for (int i = 0; i < _colorPalette.Length; i += buttonsPerRow)
             {
-                GUI.backgroundColor = _colorPalette[i];
-                if (GUILayout.Button("", GUILayout.Width(40), GUILayout.Height(40)))
+                EditorGUILayout.BeginHorizontal();
+                for (int j = 0; j < buttonsPerRow && (i + j) < _colorPalette.Length; j++)
                 {
-                    _currentColor = _colorPalette[i];
+                    int index = i + j;
+                    GUI.backgroundColor = _colorPalette[index];
+                    if (GUILayout.Button("", GUILayout.Width(40), GUILayout.Height(40)))
+                    {
+                        _currentColor = _colorPalette[index];
+                    }
+                    GUI.backgroundColor = Color.white;
                 }
-                GUI.backgroundColor = Color.white;
+                EditorGUILayout.EndHorizontal();
             }
-            EditorGUILayout.EndHorizontal();
             
+            EditorGUILayout.Space(3);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.LabelField("Current Color:");
-            GUI.backgroundColor = _currentColor;
-            EditorGUILayout.ColorField(GUIContent.none, _currentColor, false, false, false, GUILayout.Width(60), GUILayout.Height(20));
-            GUI.backgroundColor = Color.white;
+            EditorGUILayout.LabelField("Current:", GUILayout.Width(55));
+            _currentColor = EditorGUILayout.ColorField(GUIContent.none, _currentColor, false, false, false, GUILayout.Width(60), GUILayout.Height(20));
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
         }
         
-        private void DrawGrid()
+        private void DrawGrids()
         {
-            if (_currentLevel == null) return;
+            if (!_currentLevel) return;
             
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField("Grid Canvas", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Left Click: Place active square | Right Click: Erase | Empty cells will be filled with inactive squares", MessageType.Info);
+            EditorGUILayout.HelpBox("Left Click: Place | Right Click: Erase | Drag to paint", MessageType.Info);
+            
+            // Draw grids based on edit mode
+            if (_editMode == EditMode.Both)
+            {
+                EditorGUILayout.BeginHorizontal();
+                DrawSingleGrid(false, "Initial Grid");
+                GUILayout.Space(10);
+                DrawSingleGrid(true, "Target Grid");
+                EditorGUILayout.EndHorizontal();
+            }
+            else if (_editMode == EditMode.Initial)
+            {
+                DrawSingleGrid(false, "Initial Grid (Starting State)");
+            }
+            else // Target
+            {
+                DrawSingleGrid(true, "Target Grid (Goal State)");
+            }
+            
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
+        }
+        
+        private void DrawSingleGrid(bool isTarget, string label)
+        {
+            EditorGUILayout.BeginVertical();
+            
+            // Label with background
+            var labelStyle = new GUIStyle(EditorStyles.boldLabel);
+            labelStyle.alignment = TextAnchor.MiddleCenter;
+            EditorGUILayout.LabelField(label, labelStyle);
+            EditorGUILayout.Space(3);
             
             Event e = Event.current;
             
@@ -168,12 +284,12 @@ namespace Levels
                 {
                     Rect cellRect = GUILayoutUtility.GetRect(_cellSize, _cellSize);
                     
-                    var squareData = _currentLevel.GetSquare(row, col);
+                    var squareData = _currentLevel.GetSquare(row, col, isTarget);
                     Color cellColor;
                     
                     if (squareData != null)
                     {
-                        if (squareData.isActive)
+                        if (squareData.inactive)
                         {
                             cellColor = squareData.color;
                         }
@@ -188,28 +304,17 @@ namespace Levels
                     }
                     else
                     {
-                        // Empty cell - will become inactive when applied
                         cellColor = new Color(0.25f, 0.25f, 0.25f);
                     }
                     
                     EditorGUI.DrawRect(cellRect, cellColor);
                     
-                    // Draw X pattern for inactive or empty squares when shown
-                    if (squareData != null && !squareData.isActive && _showInactiveSquares)
-                    {
-                        Handles.color = new Color(0.6f, 0.6f, 0.6f, 0.8f);
-                        Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMin), new Vector3(cellRect.xMax, cellRect.yMax));
-                        Handles.DrawLine(new Vector3(cellRect.xMax, cellRect.yMin), new Vector3(cellRect.xMin, cellRect.yMax));
-                    }
-                    else if (squareData == null && _fillEmptyWithInactive)
-                    {
-                        // Show preview of where inactive squares will be placed
-                        Handles.color = new Color(0.4f, 0.4f, 0.4f, 0.5f);
-                        Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMin), new Vector3(cellRect.xMax, cellRect.yMax));
-                        Handles.DrawLine(new Vector3(cellRect.xMax, cellRect.yMin), new Vector3(cellRect.xMin, cellRect.yMax));
-                    }
-                    
-                    GUI.Box(cellRect, "");
+                    // Draw border
+                    Handles.color = new Color(0.15f, 0.15f, 0.15f);
+                    Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMin), new Vector3(cellRect.xMax, cellRect.yMin));
+                    Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMin), new Vector3(cellRect.xMin, cellRect.yMax));
+                    Handles.DrawLine(new Vector3(cellRect.xMax, cellRect.yMin), new Vector3(cellRect.xMax, cellRect.yMax));
+                    Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMax), new Vector3(cellRect.xMax, cellRect.yMax));
                     
                     // Handle mouse input
                     if (!cellRect.Contains(e.mousePosition)) continue;
@@ -217,9 +322,9 @@ namespace Levels
                     {
                         if (e.type != EventType.MouseDrag || !_isDragging) continue;
                         if (_isErasing)
-                            RemoveSquare(row, col);
+                            RemoveSquare(row, col, isTarget);
                         else
-                            PlaceSquare(row, col);
+                            PlaceSquare(row, col, isTarget);
                         e.Use();
                     }
                     else
@@ -228,14 +333,14 @@ namespace Levels
                         {
                             _isDragging = true;
                             _isErasing = false;
-                            PlaceSquare(row, col);
+                            PlaceSquare(row, col, isTarget);
                             e.Use();
                         }
                         else if (e.button == 1) // Right click
                         {
                             _isDragging = true;
                             _isErasing = true;
-                            RemoveSquare(row, col);
+                            RemoveSquare(row, col, isTarget);
                             e.Use();
                         }
                     }
@@ -255,29 +360,45 @@ namespace Levels
         private void DrawActions()
         {
             EditorGUILayout.BeginVertical("box");
+            EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
             
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Clear Grid"))
+            if (GUILayout.Button("Clear Initial", GUILayout.Height(30)))
             {
-                if (_currentLevel != null && EditorUtility.DisplayDialog("Clear Grid", "Clear all squares from the grid?", "Yes", "No"))
+                if (_currentLevel && EditorUtility.DisplayDialog("Clear Initial Grid", "Clear all squares from initial grid?", "Yes", "No"))
+                {
+                    _currentLevel.Clear(true, false);
+                    EditorUtility.SetDirty(_currentLevel);
+                }
+            }
+            
+            if (GUILayout.Button("Clear Target", GUILayout.Height(30)))
+            {
+                if (_currentLevel && EditorUtility.DisplayDialog("Clear Target Grid", "Clear all squares from target grid?", "Yes", "No"))
+                {
+                    _currentLevel.Clear(false);
+                    EditorUtility.SetDirty(_currentLevel);
+                }
+            }
+            
+            if (GUILayout.Button("Clear Both", GUILayout.Height(30)))
+            {
+                if (_currentLevel && EditorUtility.DisplayDialog("Clear Both Grids", "Clear all squares from both grids?", "Yes", "No"))
                 {
                     _currentLevel.Clear();
                     EditorUtility.SetDirty(_currentLevel);
                 }
             }
-            
-            if (GUILayout.Button("Apply to Scene") && _currentLevel != null && _targetGrid != null)
-            {
-                ApplyToScene();
-            }
             EditorGUILayout.EndHorizontal();
             
-            if (_currentLevel != null)
+            EditorGUILayout.Space(5);
+            
+            GUI.enabled = _currentLevel != null && _targetGrid != null;
+            if (GUILayout.Button("Apply Initial Grid to Scene", GUILayout.Height(35)))
             {
-                int activeCount = _currentLevel.GetActiveSquares().Count;
-                int totalCount = _currentLevel.squares.Count;
-                EditorGUILayout.HelpBox($"Active squares: {activeCount} | Total squares: {totalCount}", MessageType.Info);
+                ApplyToScene(false);
             }
+            GUI.enabled = true;
             
             EditorGUILayout.EndVertical();
         }
@@ -306,38 +427,37 @@ namespace Levels
             }
         }
         
-        private void PlaceSquare(int row, int col)
+        private void PlaceSquare(int row, int col, bool isTarget)
         {
-            if (_currentLevel != null)
+            if (_currentLevel)
             {
-                _currentLevel.AddSquare(row, col, _currentColor, true); // Always create active squares
+                _currentLevel.AddSquare(row, col, _currentColor, false, isTarget);
                 EditorUtility.SetDirty(_currentLevel);
                 Repaint();
             }
         }
         
-        private void RemoveSquare(int row, int col)
+        private void RemoveSquare(int row, int col, bool isTarget)
         {
-            if (_currentLevel != null)
+            if (_currentLevel)
             {
-                _currentLevel.RemoveSquare(row, col);
+                _currentLevel.RemoveSquare(row, col, isTarget);
                 EditorUtility.SetDirty(_currentLevel);
                 Repaint();
             }
         }
         
-        private void ApplyToScene()
+        private void ApplyToScene(bool useTarget)
         {
-            if (_squarePrefab == null)
+            if (!_squarePrefab)
             {
                 EditorUtility.DisplayDialog("Error", "Please assign a Square Prefab first!", "OK");
                 return;
             }
             
-            // Fill empty positions with inactive squares if enabled
             if (_fillEmptyWithInactive)
             {
-                _currentLevel.FillWithInactiveSquares(_inactiveSquareColor);
+                _currentLevel.FillWithInactiveSquares(_inactiveSquareColor, !useTarget, useTarget);
                 EditorUtility.SetDirty(_currentLevel);
             }
             
@@ -347,13 +467,12 @@ namespace Levels
                 DestroyImmediate(_targetGrid.transform.GetChild(0).gameObject);
             }
             
-            // Create squares from level data (including inactive ones)
-            // Sort by row then column to maintain order
-            var allSquares = _currentLevel.GetAllSquares();
+            // Create squares from level data
+            var allSquares = _currentLevel.GetAllSquares(useTarget);
             allSquares.Sort((a, b) =>
             {
-                int rowCompare = a.row.CompareTo(b.row);
-                return rowCompare != 0 ? rowCompare : a.column.CompareTo(b.column);
+                int rowCompare = a.Id.Row.CompareTo(b.Id.Row);
+                return rowCompare != 0 ? rowCompare : a.Id.Column.CompareTo(b.Id.Column);
             });
             
             int index = 0;
@@ -362,38 +481,16 @@ namespace Levels
                 GameObject square = (GameObject)PrefabUtility.InstantiatePrefab(_squarePrefab, _targetGrid.transform);
                 square.name = $"Square{index:D2}";
                 
-                var spriteRenderer = square.GetComponent<SpriteRenderer>();
-                if (spriteRenderer != null)
-                {
-                    spriteRenderer.color = squareData.color;
-                    
-                    // Make inactive squares semi-transparent
-                    if (!squareData.isActive)
-                    {
-                        Color color = spriteRenderer.color;
-                        color.a = 0.3f;
-                        spriteRenderer.color = color;
-                    }
-                }
+                var sq = square.GetComponent<Square>();
+         
+                sq.GetComponent<SpriteRenderer>().color = squareData.color;
                 
-                // Optionally tag or add component to mark inactive squares
-                if (!squareData.isActive)
-                {
-                    square.tag = "Inactive"; // You can use this in your game logic
-                    
-                    // Or add a custom component to track inactive state
-                    var squareComponent = square.GetComponent<Square>();
-                    if (squareComponent != null)
-                    {
-                        // You could add an "isActive" field to your Square class
-                        // squareComponent.isActive = false;
-                    }
-                }
-                
+                sq.Inactive = squareData.inactive;
+             
                 index++;
             }
             
-            // Update grid config to match level
+            // Update grid config
             var gridConfigField = typeof(SpriteGrid).GetField("config", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             if (gridConfigField != null)
             {
@@ -401,9 +498,10 @@ namespace Levels
                 config.columnsPerRow = _gridColumns;
             }
             
-            int activeCount = _currentLevel.GetActiveSquares().Count;
+            int activeCount = _currentLevel.GetActiveSquares(useTarget).Count;
+            string gridType = useTarget ? "Target" : "Initial";
             EditorUtility.DisplayDialog("Success", 
-                $"Created {index} total squares ({activeCount} active, {index - activeCount} inactive) in the scene!", 
+                $"Applied {gridType} Grid: {index} total squares ({activeCount} active, {index - activeCount} inactive)!", 
                 "OK");
             EditorUtility.SetDirty(_targetGrid.gameObject);
         }

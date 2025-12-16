@@ -14,4 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rows: 4
   columns: 4
-  squares: []
+  initialSquares: []
+  targetSquares: []

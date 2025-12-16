@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Levels
 {
-      public class LevelLoader : MonoBehaviour
+      public sealed class LevelLoader : MonoBehaviour
     {
         [SerializeField] private LevelData levelData;
         [SerializeField] private GameObject squarePrefab;
@@ -23,7 +23,7 @@ namespace Levels
             // Fill empty positions with inactive squares
             if (fillEmptyWithInactive)
             {
-                levelData.FillWithInactiveSquares(inactiveSquareColor);
+                levelData.FillWithInactiveSquares(inactiveSquareColor, false,false);
             }
             
             // Clear existing squares
@@ -33,11 +33,11 @@ namespace Levels
             }
             
             // Create all squares (active and inactive)
-            var allSquares = levelData.GetAllSquares();
+            var allSquares = levelData.GetAllSquares(true);
             allSquares.Sort((a, b) =>
             {
-                int rowCompare = a.row.CompareTo(b.row);
-                return rowCompare != 0 ? rowCompare : a.column.CompareTo(b.column);
+                int rowCompare = a.Id.Row.CompareTo(b.Id.Row);
+                return rowCompare != 0 ? rowCompare : a.Id.Column.CompareTo(b.Id.Column);
             });
             
             int index = 0;
@@ -47,14 +47,14 @@ namespace Levels
                 square.name = $"Square{index:D2}";
                 
                 var sq = square.GetComponent<Square>();
-                sq.ID = new GridIndex(squareData.row, squareData.column);
+                sq.ID = new GridIndex(squareData.Id.Row, squareData.Id.Column);
                 sq.spriteRenderer.color = squareData.color;
-                sq.Inactive = !squareData.isActive;
+                sq.Inactive = !squareData.inactive;
             
                 index++;
             }
             
-            int activeCount = levelData.GetActiveSquares().Count;
+            int activeCount = levelData.GetActiveSquares(true).Count;
             Debug.Log($"Loaded {allSquares.Count} squares ({activeCount} active, {allSquares.Count - activeCount} inactive)");
         }
         

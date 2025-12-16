@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Board
 {
+    [ExecuteAlways]
     [RequireComponent(typeof(SpriteRenderer))]
     public sealed class Square : MonoBehaviour
     {
@@ -12,7 +13,8 @@ namespace Board
         public GridIndex ID;
         [SerializeField] private bool inactive;
         public bool Inactive {get => inactive;
-            set {inactive = value; spriteRenderer.enabled = !value;}}
+            set {inactive = value; 
+                spriteRenderer.enabled = !value;}}
 
 
         // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -21,11 +23,7 @@ namespace Board
         
             spriteRenderer = GetComponent<SpriteRenderer>();
             spriteRenderer.color =  new Color(Random.Range(0.1f, 1.0f), Random.Range(0.1f, 1.0f), Random.Range(0.1f, 1.0f), 1f);
-        
-
-         
-        
-        
+            
 
         }
     
