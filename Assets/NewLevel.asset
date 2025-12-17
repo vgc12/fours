@@ -1,0 +1,108 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed741609dcc2a4247ad182d17c8bafb4, type: 3}
+  m_Name: NewLevel
+  m_EditorClassIdentifier: 
+  rows: 3
+  columns: 3
+  initialSquares:
+  - id:
+      row: 0
+      column: 0
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 0
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 0
+      column: 1
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 1
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 0
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 1
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 2
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 2
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 0
+      column: 2
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  targetSquares:
+  - id:
+      row: 0
+      column: 1
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 1
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 0
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 1
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 2
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 0
+      column: 0
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 0
+      column: 2
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 2
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 0
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0

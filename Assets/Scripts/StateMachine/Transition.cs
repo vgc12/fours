@@ -1,6 +1,6 @@
-﻿namespace StateMachines
+﻿namespace StateMachine
 {
-    public class Transition : ITransition
+    public sealed class Transition : ITransition
     {
         public IPredicate Predicate { get; }
         public IState To { get; }

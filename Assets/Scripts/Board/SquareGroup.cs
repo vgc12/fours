@@ -1,11 +1,13 @@
 ﻿using System.Threading.Tasks;
+using UnityEditor;
 using UnityEngine;
 
 namespace Board
 {
-    public class SquareGroup
+    public sealed class SquareGroup
     {
 
+        public GUID Id;
       
         public GridIndex TopLeftIndex;
         
@@ -15,7 +17,7 @@ namespace Board
         public Square TopRight;
         public Square BottomLeft;
         public Square BottomRight;
-
+        
 
 
 
@@ -28,14 +30,17 @@ namespace Board
             TopRight = topRight;
             BottomLeft = bottomLeft;
             BottomRight = bottomRight;
-            CenterPoint = (TopLeft.transform.position + BottomRight.transform.position) / 2f;
+            CenterPoint = (TopLeft.transform.position + BottomRight.transform.position + TopRight.transform.position + BottomLeft.transform.position) / 4f;
+            
+            Id = GUID.Generate();
         }
 
         public async Task RotateClockwise()
         {
-            await RotateAsync(SpriteGrid.RotationDirection.Clockwise);
-
+            await RotateAsync(RotationDirection.Clockwise);
+            
             var temp = TopLeft;
+            
             TopLeft = BottomLeft;
             BottomLeft = BottomRight;
             BottomRight = TopRight;
@@ -46,7 +51,7 @@ namespace Board
         }
 
         
-        public async Task RotateAsync( SpriteGrid.RotationDirection direction)
+        public async Task RotateAsync( RotationDirection direction)
         {
             
             var totalDegrees = 90f * (int)direction;
@@ -56,7 +61,7 @@ namespace Board
       
             while (Mathf.Abs(rotatedDegrees) < Mathf.Abs(totalDegrees))
             {
-                float rotationThisFrame = 20 * Time.deltaTime * (int)direction;
+                var rotationThisFrame = 200 * Time.deltaTime * (int)direction;
 
                 if (Mathf.Abs(rotatedDegrees + rotationThisFrame) > Mathf.Abs(totalDegrees))
                 {
@@ -78,8 +83,11 @@ namespace Board
   
         }
 
-   
-    
+
+        public async Task RotateCounterClockwise()
+        {
+            await RotateAsync(RotationDirection.CounterClockwise);
+        }
     }
     
     

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace StateMachines
+namespace StateMachine
 {
     public class StateMachine
     {
@@ -9,7 +9,7 @@ namespace StateMachines
         
         private Dictionary<Type, StateNode> _nodes = new();
 
-        private readonly HashSet<ITransition> _anyTransitions = new HashSet<ITransition>();
+        private readonly HashSet<ITransition> _anyTransitions = new();
         public void Update()
         {
             var transition = GetTransition();

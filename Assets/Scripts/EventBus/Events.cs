@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace EventChannel
+namespace EventBus
 {
 
     public struct SwordThrownEvent : IEvent

@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 
-namespace EventChannel
+namespace EventBus
 {
     public static class EventBus<T> where T : IEvent
     {

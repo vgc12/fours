@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace EventChannel
+namespace EventBus
 {
     public interface IEventBinding<T>
     {

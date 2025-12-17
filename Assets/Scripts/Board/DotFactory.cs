@@ -1,55 +1,45 @@
-﻿using Board;
+﻿using System.Runtime.InteropServices;
+using Singletons;
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class DotFactory : MonoBehaviour
+namespace Board
 {
-    
-    public static DotFactory Instance { get; private set; }
-    
-    public DotConfig config;
-    
-    private void Awake()
+
+    public sealed class DotFactory : Singleton<DotFactory>
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
-    }
     
-    
-    public Dot CreateDot( SquareGroup squareGroup)
-    {
-        var dotObject = new GameObject("Dot")
+        public DotConfig config;
+        
+        public Dot CreateDot( SquareGroup squareGroup)
         {
-            transform =
+            var dotObject = new GameObject("Dot")
             {
-                position = squareGroup.CenterPoint,
-            }
-        };
+                transform =
+                {
+                    position = squareGroup.CenterPoint,
+                }
+            };
         
      
         
-        var spriteRenderer = dotObject.AddComponent<SpriteRenderer>();
-        spriteRenderer.sprite = config.sprite;
+            var spriteRenderer = dotObject.AddComponent<SpriteRenderer>();
+            spriteRenderer.sprite = config.sprite;
         
-        var dot = dotObject.AddComponent<Dot>();
-        dot.config = config;
-        dot.squareGroup = squareGroup;
+            var dot = dotObject.AddComponent<Dot>();
+            dot.config = config;
+            dot.squareGroup = squareGroup;
         
 
-        dotObject.layer = LayerMask.NameToLayer("Dot");
+            dotObject.layer = LayerMask.NameToLayer("Dot");
 
-        var col = dotObject.AddComponent<BoxCollider2D>();
-        col.size = new Vector2(.5f,.5f);
+            var col = dotObject.AddComponent<BoxCollider2D>();
+            col.size = new Vector2(.5f,.5f);
         
-        return dot;
+            return dot;
+        }
+    
+    
+    
     }
-    
-    
-    
 }

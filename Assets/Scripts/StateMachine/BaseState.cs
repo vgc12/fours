@@ -1,4 +1,4 @@
-﻿namespace StateMachines
+﻿namespace StateMachine
 {
     public abstract class BaseState : IState
     {
