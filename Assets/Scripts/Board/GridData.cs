@@ -23,7 +23,7 @@ namespace Board
                 var row = i / columnsPerRow;
                 var column = i % columnsPerRow;
                 _grid[row, column] = squares[i];
-                squares[i].ID = new GridIndex(row, column);
+                //squares[i].ID = new GridIndex(row, column);
             }
         }
 
@@ -45,8 +45,8 @@ namespace Board
 
         public void UpdateWithGroup(SquareGroup group)
         {
-            var topLeftRow = group.TopLeftIndex.Row;
-            var topLeftColumn = group.TopLeftIndex.Column;
+            var topLeftRow = group.TopLeftIndex.row;
+            var topLeftColumn = group.TopLeftIndex.column;
 
             if (!ValidGroupAt(topLeftRow, topLeftColumn)) return;
 

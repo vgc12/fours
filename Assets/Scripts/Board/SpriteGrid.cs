@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,7 +11,7 @@ namespace Board
 {
     public sealed class SpriteGrid : MonoBehaviour
     {
-        [SerializeField] private GridConfig config = new GridConfig();
+        [SerializeField] private GridConfig config = new();
 
         private List<Square> _squares;
         private GridData _gridData;
@@ -22,31 +23,31 @@ namespace Board
 
         public Dot SelectedDot { get; set; }
         public bool IsRotating { get; private set; }
-        
-        private bool _enableUndo = true; 
-        
+
+        private bool _enableUndo = true;
+
         private CommandManager _commandManager;
 
         [SerializeField] private int maxUndoHistory = 50;
-        
+
         private void InitializeCommandSystem()
         {
             if (!_enableUndo) return;
             _commandManager = new CommandManager(maxUndoHistory);
-                
-          
+
+
             _commandManager.OnCommandExecuted += OnCommandExecuted;
             _commandManager.OnCommandUndone += OnCommandUndone;
             _commandManager.OnCommandRedone += OnCommandRedone;
         }
-        
-        // Replace your existing ExecuteRotation method
+
+
         public async Task ExecuteRotation()
         {
             if (SelectedDot?.squareGroup == null) return;
 
             var rotateCommand = new RotateGroupCommand(SelectedDot.squareGroup, _gridData, RotationDirection.Clockwise);
-            
+
             if (_enableUndo && _commandManager != null)
             {
                 var success = await _commandManager.ExecuteCommand(rotateCommand);
@@ -71,22 +72,22 @@ namespace Board
                 }
             }
         }
-        
-        // Add method to set selected dot (needed for SelectDotCommand)
+
+
         public void SetSelectedDot(Dot dot)
         {
             SelectedDot = dot;
         }
-        
-        // Modified click handler using commands
+
+
         private async void OnClick(InputAction.CallbackContext obj)
         {
             Vector2 mousePosition = Input.mousePosition;
             var clickedDot = _inputHandler.GetDotAtScreenPosition(mousePosition);
 
-            // Create select command
+
             var selectCommand = new SelectDotCommand(this, clickedDot);
-            
+
             if (_enableUndo && _commandManager != null)
             {
                 await _commandManager.ExecuteCommand(selectCommand);
@@ -101,7 +102,7 @@ namespace Board
                 await ExecuteRotation();
             }
         }
-        
+
         // Public methods for undo/redo functionality
         [ContextMenu("Undo Last Action")]
         public async Task UndoLastAction()
@@ -109,46 +110,49 @@ namespace Board
             if (_commandManager != null)
             {
                 await _commandManager.UndoLastCommand();
-                FindGroups(); // Refresh groups after undo
+                FindGroups();
                 _dotManager.ResetDots(_squareGroups);
             }
         }
-        
+
         [ContextMenu("Redo Last Action")]
         public async Task RedoLastAction()
         {
             if (_commandManager != null)
             {
                 await _commandManager.RedoLastCommand();
-                FindGroups(); // Refresh groups after redo
+                FindGroups();
                 _dotManager.ResetDots(_squareGroups);
             }
         }
-        
+
         public bool CanUndo => _commandManager?.CanUndo ?? false;
         public bool CanRedo => _commandManager?.CanRedo ?? false;
-        
-        // Optional: Event handlers for UI feedback
+
+
         private void OnCommandExecuted(ICommand command)
         {
             // Update UI, play sounds, etc.
             Debug.Log($"Command executed: {command.Description}");
         }
-        
+
         private void OnCommandUndone(ICommand command)
         {
             Debug.Log($"Command undone: {command.Description}");
         }
-        
+
         private void OnCommandRedone(ICommand command)
         {
             Debug.Log($"Command redone: {command.Description}");
         }
-        
-        // Don't forget to add this to your Start() method
-  
-        
-        // Clean up in OnDestroy
+
+
+        private void OnDisable()
+        {
+            _dotManager.ClearDots();
+        }
+
+
         private void OnDestroy()
         {
             if (_commandManager != null)
@@ -157,10 +161,14 @@ namespace Board
                 _commandManager.OnCommandUndone -= OnCommandUndone;
                 _commandManager.OnCommandRedone -= OnCommandRedone;
             }
-            
+
+
             _playerInputActions.UI.Click.canceled -= OnClick;
+            _playerInputActions.UI.Disable();
+            _playerInputActions.Disable();
             _playerInputActions?.Dispose();
         }
+
         private void Start()
         {
             InitializeGridSystem();
@@ -169,7 +177,7 @@ namespace Board
         private void InitializeGridSystem()
         {
             InitializeComponents();
-            InitializeCommandSystem(); 
+            InitializeCommandSystem();
             InitializeInput();
             InitializeGrid();
             FindGroups();
@@ -191,7 +199,7 @@ namespace Board
             _playerInputActions.UI.Enable();
             _playerInputActions.UI.Click.canceled += OnClick;
         }
-        
+
 
         public void FindGroups()
         {
@@ -202,8 +210,9 @@ namespace Board
         public void InitializeGrid()
         {
             GetChildSquares();
+            if (_gridData == null) _gridData = new GridData();
             _gridData.Initialize(_squares, config.columnsPerRow);
-            
+
             if (_squares.Count == 0)
             {
                 Debug.LogWarning("No child sprites found to arrange in grid.");
@@ -231,21 +240,23 @@ namespace Board
                     var square = _gridData.GetSquare(row, column);
                     if (square == null) continue;
 
-                    var targetPosition = _gridLayout.CalculateGridPosition(row, column, startPosition, square.transform.position.z);
+                    var targetPosition =
+                        _gridLayout.CalculateGridPosition(row, column, startPosition, square.transform.position.z);
                     square.transform.position = targetPosition;
                 }
             }
         }
-        
+
 
         private void OnValidate()
         {
             if (Application.isPlaying) return;
-            
-            InitializeGridSystem();
+
+            InitializeComponents();
+            InitializeGrid();
         }
 
-        // Public interface methods
+
         public string GetGridDebugString() => _gridData?.GetDebugString() ?? "Grid not initialized";
 
         public string GetAllGroupsDebugString()
@@ -258,14 +269,15 @@ namespace Board
             {
                 var group = _squareGroups[i];
                 result += $"Group {i}: TopLeft({group.TopLeft.name}), TopRight({group.TopRight.name}), " +
-                         $"BottomLeft({group.BottomLeft.name}), BottomRight({group.BottomRight.name}) " +
-                         $"at Index{group.TopLeftIndex}\n";
+                          $"BottomLeft({group.BottomLeft.name}), BottomRight({group.BottomRight.name}) " +
+                          $"at Index{group.TopLeftIndex}\n";
             }
+
             return result;
         }
 
         public Vector2 GetGridSize() => _gridLayout.GetGridSize(_squares?.Count ?? 0);
-        
+
 
         private void OnDrawGizmos()
         {
@@ -286,10 +298,9 @@ namespace Board
             // Draw grid bounds
             Gizmos.color = Color.green;
             var gridSize = GetGridSize();
-            var center = new Vector3(startPos.x + gridSize.x * 0.5f, startPos.y - gridSize.y * 0.5f, transform.position.z);
+            var center = new Vector3(startPos.x + gridSize.x * 0.5f, startPos.y - gridSize.y * 0.5f,
+                transform.position.z);
             Gizmos.DrawWireCube(center, new Vector3(gridSize.x + config.spacing.x, gridSize.y + config.spacing.y, 0));
         }
-
-
     }
 }

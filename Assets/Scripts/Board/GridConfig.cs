@@ -7,7 +7,7 @@ namespace Board
     public class GridConfig
     {
         [Header("Grid Settings")]
-        public Vector2 spacing = new Vector2(1f, 1f);
+        public Vector2 spacing = new(1f, 1f);
         [Min(1)] public int columnsPerRow = 5;
         
         [Header("Alignment")]

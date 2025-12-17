@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
+using Unity.VisualScripting;
+using UnityEngine;
 
 namespace Board
 {
     public sealed class DotManager
     {
-        private List<Dot> _dots = new List<Dot>();
+        private List<Dot> _dots = new();
 
         public IReadOnlyList<Dot> Dots => _dots;
 
@@ -27,15 +29,17 @@ namespace Board
                 _dots[i].squareGroup = squareGroups[i];
             }
         }
+        
 
-        private void ClearDots()
+        
+        public void ClearDots()
         {
-            if (_dots == null) return;
+            _dots ??= new List<Dot>(Object.FindObjectsByType<Dot>(sortMode: FindObjectsSortMode.None));
             foreach (var dot in _dots)
             {
                 if (dot != null && dot.gameObject != null)
                 {
-                    UnityEngine.Object.Destroy(dot.gameObject);
+                    Object.Destroy(dot.gameObject);
                 }
             }
         }

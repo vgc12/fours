@@ -25,7 +25,7 @@ namespace Levels
         private EditMode _editMode = EditMode.Initial;
         
         // Inactive square settings
-        private Color _inactiveSquareColor = new Color(0.2f, 0.2f, 0.2f, 0.5f);
+        private Color _inactiveSquareColor = new(0.2f, 0.2f, 0.2f, 0.5f);
         private bool _showInactiveSquares = true;
         private bool _fillEmptyWithInactive = false;
         
@@ -42,7 +42,7 @@ namespace Levels
             Color.blue,
             Color.green,
             Color.yellow,
-            new Color(1f, 0.5f, 0f), // Orange
+            new(1f, 0.5f, 0f), // Orange
             Color.magenta,
             Color.cyan,
             Color.white
@@ -81,6 +81,7 @@ namespace Levels
             DrawGrids();
             DrawActions();
             
+            DrawSaveButton();
             EditorGUILayout.Space(10);
             EditorGUILayout.EndScrollView();
         }
@@ -231,6 +232,7 @@ namespace Levels
             EditorGUILayout.EndHorizontal();
             
             EditorGUILayout.EndVertical();
+            
             EditorGUILayout.Space(5);
         }
         
@@ -289,7 +291,7 @@ namespace Levels
                     
                     if (squareData != null)
                     {
-                        if (squareData.inactive)
+                        if (!squareData.inactive)
                         {
                             cellColor = squareData.color;
                         }
@@ -400,6 +402,9 @@ namespace Levels
             }
             GUI.enabled = true;
             
+            
+        
+            
             EditorGUILayout.EndVertical();
         }
         
@@ -471,8 +476,8 @@ namespace Levels
             var allSquares = _currentLevel.GetAllSquares(useTarget);
             allSquares.Sort((a, b) =>
             {
-                int rowCompare = a.Id.Row.CompareTo(b.Id.Row);
-                return rowCompare != 0 ? rowCompare : a.Id.Column.CompareTo(b.Id.Column);
+                int rowCompare = a.id.row.CompareTo(b.id.row);
+                return rowCompare != 0 ? rowCompare : a.id.column.CompareTo(b.id.column);
             });
             
             int index = 0;
@@ -486,6 +491,9 @@ namespace Levels
                 sq.GetComponent<SpriteRenderer>().color = squareData.color;
                 
                 sq.Inactive = squareData.inactive;
+                
+                sq.ID = new GridIndex(squareData.id.row, squareData.id.column);
+                
              
                 index++;
             }
@@ -496,6 +504,7 @@ namespace Levels
             {
                 var config = (GridConfig)gridConfigField.GetValue(_targetGrid);
                 config.columnsPerRow = _gridColumns;
+                
             }
             
             int activeCount = _currentLevel.GetActiveSquares(useTarget).Count;
@@ -504,6 +513,17 @@ namespace Levels
                 $"Applied {gridType} Grid: {index} total squares ({activeCount} active, {index - activeCount} inactive)!", 
                 "OK");
             EditorUtility.SetDirty(_targetGrid.gameObject);
+        }
+     
+        public void DrawSaveButton()
+        {
+            EditorGUILayout.Space(5);
+            if (_currentLevel == null || !GUILayout.Button("Save Level Data", GUILayout.Height(30))) return;
+            EditorUtility.SetDirty(_currentLevel);
+            AssetDatabase.SaveAssets();
+            EditorUtility.DisplayDialog("Saved", "Level data saved successfully!", "OK");
+            _currentLevel.rows = _gridRows;
+            _currentLevel.columns = _gridColumns;
         }
     }
 }

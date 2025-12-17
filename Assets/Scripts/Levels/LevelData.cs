@@ -1,4 +1,4 @@
-// LevelData.cs - Enhanced with initial and target grid states
+
 
 using System.Collections.Generic;
 using Board;
@@ -12,27 +12,27 @@ namespace Levels
         [System.Serializable]
         public class SquareData
         {
-            public GridIndex Id { get; }
+            public GridIndex id;
             public Color color;
             public bool inactive ;
             
             public SquareData (int row, int column, Color col, bool inactive = false)
             {
-                Id = new GridIndex(row, column);
+                id = new GridIndex(row, column);
                 color = col;
                 this.inactive = inactive;
             }
             
             public SquareData(GridIndex id, Color col, bool inactive = false)
             {
-                Id = id;
+                this.id = id;
                 color = col;
                 this.inactive = inactive;
             }
             
             public SquareData Clone()
             {
-                return new SquareData(Id.Row, Id.Column, color, inactive);
+                return new SquareData(id.row, id.column, color, inactive);
             }
         }
         
@@ -40,10 +40,10 @@ namespace Levels
         public int columns = 4;
         
         // Initial grid state (starting configuration)
-        public List<SquareData> initialSquares = new List<SquareData>();
+        public List<SquareData> initialSquares = new();
         
         // Target grid state (goal configuration)
-        public List<SquareData> targetSquares = new List<SquareData>();
+        public List<SquareData> targetSquares = new();
         
         public void Clear(bool clearInitial = true, bool clearTarget = true)
         {
@@ -54,20 +54,20 @@ namespace Levels
         public void AddSquare(int row, int column, Color color, bool inactive, bool isTarget)
         {
             var list = isTarget ? targetSquares : initialSquares;
-            list.RemoveAll(s => s.Id.Row == row && s.Id.Column == column);
+            list.RemoveAll(s => s.id.row == row && s.id.column == column);
             list.Add(new SquareData(row, column, color, inactive));
         }
         
         public void RemoveSquare(int row, int column, bool isTarget)
         {
             var list = isTarget ? targetSquares : initialSquares;
-            list.RemoveAll(s => s.Id.Row == row && s.Id.Column == column);
+            list.RemoveAll(s => s.id.row == row && s.id.column == column);
         }
         
         public SquareData GetSquare(int row, int column, bool isTarget)
         {
             var list = isTarget ? targetSquares : initialSquares;
-            return list.Find(s => s.Id.Row == row && s.Id.Column == column);
+            return list.Find(s => s.id.row == row && s.id.column == column);
         }
         
         public bool HasSquare(int row, int column, bool isTarget)
@@ -102,7 +102,7 @@ namespace Levels
             {
                 for (int col = 0; col < columns; col++)
                 {
-                    if (!list.Exists(s => (s.Id.Row == row && s.Id.Column == col) || s.inactive)) 
+                    if (!list.Exists(s => (s.id.row == row && s.id.column == col) || s.inactive)) 
                     {
                         list.Add(new SquareData(row, col, inactiveColor, true) );
                     }

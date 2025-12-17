@@ -8,8 +8,7 @@ namespace Levels
         [SerializeField] private LevelData levelData;
         [SerializeField] private GameObject squarePrefab;
         [SerializeField] private SpriteGrid spriteGrid;
-        [SerializeField] private bool fillEmptyWithInactive = true;
-        [SerializeField] private Color inactiveSquareColor = new Color(0.2f, 0.2f, 0.2f, 0.3f);
+
         
         [ContextMenu("Load Level")]
         public void LoadLevel()
@@ -20,11 +19,7 @@ namespace Levels
                 return;
             }
             
-            // Fill empty positions with inactive squares
-            if (fillEmptyWithInactive)
-            {
-                levelData.FillWithInactiveSquares(inactiveSquareColor, false,false);
-            }
+   
             
             // Clear existing squares
             while (spriteGrid.transform.childCount > 0)
@@ -33,11 +28,11 @@ namespace Levels
             }
             
             // Create all squares (active and inactive)
-            var allSquares = levelData.GetAllSquares(true);
+            var allSquares = levelData.GetAllSquares(false);
             allSquares.Sort((a, b) =>
             {
-                int rowCompare = a.Id.Row.CompareTo(b.Id.Row);
-                return rowCompare != 0 ? rowCompare : a.Id.Column.CompareTo(b.Id.Column);
+                int rowCompare = a.id.row.CompareTo(b.id.row);
+                return rowCompare != 0 ? rowCompare : a.id.column.CompareTo(b.id.column);
             });
             
             int index = 0;
@@ -47,9 +42,9 @@ namespace Levels
                 square.name = $"Square{index:D2}";
                 
                 var sq = square.GetComponent<Square>();
-                sq.ID = new GridIndex(squareData.Id.Row, squareData.Id.Column);
+                sq.ID = new GridIndex(squareData.id.row, squareData.id.column);
                 sq.spriteRenderer.color = squareData.color;
-                sq.Inactive = !squareData.inactive;
+                sq.Inactive = squareData.inactive;
             
                 index++;
             }
@@ -58,7 +53,7 @@ namespace Levels
             Debug.Log($"Loaded {allSquares.Count} squares ({activeCount} active, {allSquares.Count - activeCount} inactive)");
         }
         
-        private void Start()
+        private void Awake()
         {
             if (levelData != null)
             {
