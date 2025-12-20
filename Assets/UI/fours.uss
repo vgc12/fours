@@ -1,0 +1,26 @@
+.play-button {
+}
+
+.fours-button {
+    width: 94%;
+    align-self: center;
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Poppins-Regular.ttf?fileID=12800000&guid=a851575ed1aeba641951135938e8d83f&type=3#Poppins-Regular");
+    background-color: rgb(255, 255, 255);
+    color: rgb(0, 48, 192);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    max-width: 250px;
+    max-height: 100px;
+}
+
+.gradient-background {
+    background-image: url("project://database/Assets/UI/gradient-background.png?fileID=2800000&guid=63fcfd63afca3734abdd7796a43374e0&type=3#gradient-background");
+    background-color: rgb(255, 255, 255);
+}
+
+.unity-scroll-view__content-container {
+    justify-content: flex-start;
+    align-self: flex-start;
+}

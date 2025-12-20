@@ -24,6 +24,8 @@ namespace Board
                     var topRight = grid.GetSquare(row , col + 1);
                     var bottomLeft = grid.GetSquare(row + 1, col);
                     var bottomRight = grid.GetSquare(row + 1, col + 1);
+                    if( topLeft.Inactive || topRight.Inactive || bottomLeft.Inactive || bottomRight.Inactive)
+                        continue;
                     var group = new SquareGroup(topLeft,topRight,bottomLeft,bottomRight, new GridIndex(row, col));
                     groups.Add(group);
                 }

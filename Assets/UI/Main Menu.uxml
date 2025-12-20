@@ -1,0 +1,10 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/fours.uss?fileID=7433441132597879392&amp;guid=918f92b1122a10a4a9879600145fb718&amp;type=3#fours" />
+    <engine:VisualElement name="root" class="gradient-background" style="flex-grow: 1; background-color: rgb(97, 74, 140); background-image: url(&quot;project://database/Assets/UI/gradient-background.png?fileID=2800000&amp;guid=63fcfd63afca3734abdd7796a43374e0&amp;type=3#gradient-background&quot;); flex-shrink: 0;">
+        <engine:Label text="FOURS!" name="title" style="align-self: center; align-content: auto; -unity-text-align: middle-center; -unity-font-definition: url(&quot;project://database/Assets/UI/Fonts/Poppins-Italic.ttf?fileID=12800000&amp;guid=7a07bbcc72458644a99e4eef15a02288&amp;type=3#Poppins-Italic&quot;); font-size: 24px; -unity-font-style: bold; background-color: rgba(0, 0, 0, 0); color: rgb(255, 255, 255);" />
+        <engine:VisualElement name="VisualElement" style="flex-grow: 1; justify-content: flex-end; margin-bottom: 15px; flex-shrink: 0;">
+            <engine:Button text="Play" name="play-button" class="play-button fours-button" style="font-size: 14px; -unity-font-style: normal;" />
+            <engine:Button text="Options" name="options-button" class="fours-button" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

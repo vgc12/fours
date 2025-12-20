@@ -14,95 +14,96 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rows: 3
   columns: 3
+  movesAllowed: 10
   initialSquares:
   - id:
-      row: 0
-      column: 0
-    color: {r: 0, g: 1, b: 0, a: 1}
-    inactive: 0
-  - id:
-      row: 1
-      column: 0
-    color: {r: 0, g: 1, b: 0, a: 1}
-    inactive: 0
-  - id:
-      row: 0
-      column: 1
-    color: {r: 0, g: 1, b: 0, a: 1}
-    inactive: 0
-  - id:
-      row: 1
-      column: 1
+      row: 2
+      column: 2
     color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   - id:
       row: 2
       column: 0
-    color: {r: 1, g: 0, b: 0, a: 1}
+    color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   - id:
       row: 2
       column: 1
-    color: {r: 1, g: 0, b: 0, a: 1}
-    inactive: 0
-  - id:
-      row: 2
-      column: 2
-    color: {r: 1, g: 0, b: 0, a: 1}
+    color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   - id:
       row: 1
       column: 2
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 0
+      column: 0
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 0
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 1
+    color: {r: 1, g: 0, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 0
+      column: 1
     color: {r: 1, g: 0, b: 0, a: 1}
     inactive: 0
   - id:
       row: 0
       column: 2
-    color: {r: 1, g: 0, b: 0, a: 1}
+    color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   targetSquares:
   - id:
       row: 0
-      column: 1
+      column: 0
     color: {r: 1, g: 0, b: 0, a: 1}
     inactive: 0
   - id:
       row: 2
-      column: 1
-    color: {r: 1, g: 0, b: 0, a: 1}
-    inactive: 0
-  - id:
-      row: 1
       column: 0
     color: {r: 1, g: 0, b: 0, a: 1}
     inactive: 0
   - id:
-      row: 1
-      column: 1
-    color: {r: 1, g: 0, b: 0, a: 1}
-    inactive: 0
-  - id:
-      row: 1
+      row: 2
       column: 2
     color: {r: 1, g: 0, b: 0, a: 1}
     inactive: 0
   - id:
-      row: 0
+      row: 1
       column: 0
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 2
     color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   - id:
       row: 0
-      column: 2
+      column: 1
+    color: {r: 0, g: 1, b: 0, a: 1}
+    inactive: 0
+  - id:
+      row: 1
+      column: 1
     color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   - id:
       row: 2
-      column: 2
+      column: 1
     color: {r: 0, g: 1, b: 0, a: 1}
     inactive: 0
   - id:
-      row: 2
-      column: 0
-    color: {r: 0, g: 1, b: 0, a: 1}
+      row: 0
+      column: 2
+    color: {r: 1, g: 0, b: 0, a: 1}
     inactive: 0

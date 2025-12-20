@@ -1,50 +1,54 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Board.Commands
 {
     public sealed class SelectDotCommand : BaseCommand
     {
-        private readonly SpriteGrid _grid;
+        private readonly PlayableGrid _grid;
         private readonly Dot _dotToSelect;
         private readonly Dot _previouslySelectedDot;
 
         public override string Description => 
             $"Select dot {(_dotToSelect?.name ?? "none")}";
 
-        public SelectDotCommand(SpriteGrid grid, Dot dotToSelect)
+        public SelectDotCommand(PlayableGrid grid, Dot dotToSelect)
         {
             _grid = grid ?? throw new ArgumentNullException(nameof(grid));
             _dotToSelect = dotToSelect;
             _previouslySelectedDot = grid.SelectedDot;
         }
 
-        public override Task<bool> Execute()
+        public override async UniTask<bool> Execute()
         {
+        
+            
             try
             {
+                _grid.PreviouslySelectedDot = _previouslySelectedDot;
                 _grid.SelectedDot = _dotToSelect;
-                return Task.FromResult(true);
+                return true;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to execute select dot command: {ex.Message}");
-                return Task.FromResult(false);
+                return false;
             }
         }
 
-        public override Task<bool> Undo()
+        public override async UniTask<bool> Undo()
         {
             try
             {
                 _grid.SelectedDot = _previouslySelectedDot;
-                return Task.FromResult(true);
+                return true;
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to undo select dot command: {ex.Message}");
-                return Task.FromResult(false);
+                return false;
             }
         }
     }
