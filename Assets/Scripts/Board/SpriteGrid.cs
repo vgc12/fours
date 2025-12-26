@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Reflex.Attributes;
 using UnityEngine;
+using ILogger = Logging.ILogger;
 
 namespace Board
 {
@@ -10,6 +12,8 @@ namespace Board
     {
         [SerializeField] protected GridConfig config = new();
 
+        [Inject] public  ILogger Logger;
+        
         protected List<Square> Squares;
         protected GridData GridData;
         protected GridLayout GridLayout;
@@ -17,11 +21,19 @@ namespace Board
 
         protected virtual void Start()
         {
+            Initialize();
+        }
+
+        public virtual void Initialize()
+        {
             InitializeComponents();
             InitializeGrid();
             FindGroups();
         }
 
+        public bool MatchesGrid(string otherGridSnapshot) => otherGridSnapshot == GetGridStateSnapshot();
+        
+        
         protected virtual void InitializeComponents()
         {
             GridData = new GridData();
@@ -50,7 +62,7 @@ namespace Board
             ArrangeSpritesInGrid();
         }
 
-        protected void GetChildSquares()
+        private void GetChildSquares()
         {
             Squares = GetComponentsInChildren<Square>().OrderBy(s => s.name).ToList();
         }
@@ -73,6 +85,33 @@ namespace Board
             }
         }
 
+        protected string GetGridStateSnapshot()
+        {
+            // Create a snapshot of the current grid state by capturing positions of all squares
+            var snapshot = new System.Text.StringBuilder();
+            
+            foreach (var group in SquareGroups)
+            {
+                if (group == null || group.AnyAreNull) continue;
+                var squares = new[]
+                {
+                    group.TopLeft,
+                    group.TopRight,
+                    group.BottomLeft,
+                    group.BottomRight
+                };
+                foreach (var square in squares)
+                {
+                    if (square != null)
+                    {
+                        snapshot.Append($"{square.spriteRenderer.color}");
+                    }
+                }
+            }
+            
+            return snapshot.ToString();
+        }
+        
         public void ClearGrid()
         {
             Squares?.Clear();
@@ -138,8 +177,5 @@ namespace Board
             Gizmos.DrawWireCube(center, new Vector3(gridSize.x + config.spacing.x, gridSize.y + config.spacing.y, 0));
         }
     }
-
-    // Interactive grid for player
-
-    // Non-interactive target/reference grid
+    
 }

@@ -1,5 +1,6 @@
 <engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/fours.uss?fileID=7433441132597879392&amp;guid=918f92b1122a10a4a9879600145fb718&amp;type=3#fours" />
     <engine:VisualElement name="root" style="flex-grow: 1;">
-        <engine:Label text="Moves Remaining: 0&#10;" name="moves-label" style="-unity-font-definition: url(&quot;project://database/Assets/UI/Fonts/Poppins-Regular.ttf?fileID=12800000&amp;guid=a851575ed1aeba641951135938e8d83f&amp;type=3#Poppins-Regular&quot;);" />
+        <engine:Label text="Moves Remaining: 0&#10;" name="moves-label" style="-unity-font-definition: url(&quot;project://database/Assets/UI/Fonts/Poppins-Regular.ttf?fileID=12800000&amp;guid=a851575ed1aeba641951135938e8d83f&amp;type=3#Poppins-Regular&quot;); color: rgb(255, 255, 255); margin-top: 86px;" />
     </engine:VisualElement>
 </engine:UXML>

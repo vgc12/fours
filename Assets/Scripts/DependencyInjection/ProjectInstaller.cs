@@ -9,10 +9,8 @@ namespace DependencyInjection
     {
         public void InstallBindings(ContainerBuilder builder)
         {
-            // builder.AddSingleton(typeof(InGameAudioManager), typeof(IAudioManager));
-            builder.AddSingleton(FoursLogger.Instance, typeof(ILogger));
 
-            
+            builder.AddSingleton(typeof(FoursLogger), typeof(ILogger), typeof(FoursLogger));
         }
     }
 }

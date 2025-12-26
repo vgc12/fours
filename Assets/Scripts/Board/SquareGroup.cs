@@ -19,7 +19,7 @@ namespace Board
         public Square TopRight;
         public Square BottomLeft;
         public Square BottomRight;
-        
+        public bool AnyAreNull => TopLeft == null || TopRight == null || BottomLeft == null || BottomRight == null;
 
 
 

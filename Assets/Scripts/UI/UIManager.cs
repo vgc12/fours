@@ -5,6 +5,7 @@ using Attributes;
 using DependencyInjection;
 using EventBus;
 using Extensions;
+using Levels;
 using Singletons;
 using StateMachine;
 using UI.States;
@@ -69,6 +70,7 @@ namespace UI
         {
            // _stateMachine.ChangeState(_levelSelectState);
            _stateMachine.ChangeState(_inGameState);
+           LevelManager.instance.LoadLevel(LevelManager.instance.CurrentLevelData);
         }
 
         public void SwitchToOptions()

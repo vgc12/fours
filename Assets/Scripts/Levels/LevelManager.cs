@@ -35,6 +35,9 @@ namespace Levels
             LoadIntoGrid(initialSquares, playableGrid);
             LoadIntoGrid(targetSquares, targetGrid);
 
+            playableGrid.Initialize();
+            targetGrid.Initialize();
+
 
             var activeCount = level.GetActiveSquares(true).Count;
             Debug.Log(
@@ -63,10 +66,7 @@ namespace Levels
         {
             base.Awake();
             CurrentLevelData = levels.Count > 0 ? levels[0] : null;
-            if (CurrentLevelData != null)
-            {
-                LoadLevel(CurrentLevelData);
-            }
+ 
         }
     }
     
