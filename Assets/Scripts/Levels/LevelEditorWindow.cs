@@ -37,7 +37,8 @@ namespace Levels
         private bool _showColorPalette = true;
         
         // Color palette
-        private readonly Color[] _colorPalette = {
+        private List<Color> _colorPalette = new List<Color>
+        {
             Color.red,
             Color.blue,
             Color.green,
@@ -47,7 +48,6 @@ namespace Levels
             Color.cyan,
             Color.white
         };
-
         private TargetGrid _targetGrid;
         private int _movesAllowed;
 
@@ -204,34 +204,53 @@ namespace Levels
         {
             _showColorPalette = EditorGUILayout.Foldout(_showColorPalette, "Color Palette", true);
             if (!_showColorPalette) return;
-            
+    
             EditorGUILayout.BeginVertical("box");
-            
+    
             var buttonsPerRow = 4;
-            for (var i = 0; i < _colorPalette.Length; i += buttonsPerRow)
+            for (var i = 0; i < _colorPalette.Count; i += buttonsPerRow)
             {
                 EditorGUILayout.BeginHorizontal();
-                for (var j = 0; j < buttonsPerRow && (i + j) < _colorPalette.Length; j++)
+                for (var j = 0; j < buttonsPerRow && (i + j) < _colorPalette.Count; j++)
                 {
                     var index = i + j;
+            
+                    EditorGUILayout.BeginVertical();
+            
+                    // Color button
                     GUI.backgroundColor = _colorPalette[index];
                     if (GUILayout.Button("", GUILayout.Width(40), GUILayout.Height(40)))
                     {
                         _currentColor = _colorPalette[index];
                     }
                     GUI.backgroundColor = Color.white;
+            
+                    // Small remove button below color
+                    if (GUILayout.Button("×", GUILayout.Width(40), GUILayout.Height(15)))
+                    {
+                        _colorPalette.RemoveAt(index);
+                        return; // Exit to avoid index issues
+                    }
+            
+                    EditorGUILayout.EndVertical();
                 }
                 EditorGUILayout.EndHorizontal();
             }
-            
-            EditorGUILayout.Space(3);
+    
+            EditorGUILayout.Space(5);
+    
+            // Current color and add button
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField("Current:", GUILayout.Width(55));
             _currentColor = EditorGUILayout.ColorField(GUIContent.none, _currentColor, false, false, false, GUILayout.Width(60), GUILayout.Height(20));
+    
+            if (GUILayout.Button("Add to Palette", GUILayout.Height(20)))
+            {
+                _colorPalette.Add(_currentColor);
+            }
             EditorGUILayout.EndHorizontal();
-            
+    
             EditorGUILayout.EndVertical();
-            
             EditorGUILayout.Space(5);
         }
         

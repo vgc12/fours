@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using Levels;
+using Logging;
 using Reflex.Attributes;
 using UnityEngine;
 using ILogger = Logging.ILogger;
@@ -12,7 +15,7 @@ namespace Board
     {
         [SerializeField] protected GridConfig config = new();
 
-        [Inject] public  ILogger Logger;
+        [Inject] public FoursLogger Logger;
         
         protected List<Square> Squares;
         protected GridData GridData;
@@ -61,6 +64,22 @@ namespace Board
 
             ArrangeSpritesInGrid();
         }
+        
+        public void LoadIntoGrid(List<LevelData.SquareData> squares)
+        {
+            squares.Sort((a, b) =>
+            {
+                var rowCompare = a.id.row.CompareTo(b.id.row);
+                return rowCompare != 0 ? rowCompare : a.id.column.CompareTo(b.id.column);
+            });
+
+
+            foreach (var squareData in squares)
+            {
+                Square.Create(new GridIndex(squareData.id.row, squareData.id.column), squareData.color,
+                    squareData.inactive, transform);
+            }
+        }
 
         private void GetChildSquares()
         {
@@ -88,7 +107,7 @@ namespace Board
         protected string GetGridStateSnapshot()
         {
             // Create a snapshot of the current grid state by capturing positions of all squares
-            var snapshot = new System.Text.StringBuilder();
+            var snapshot = new StringBuilder();
             
             foreach (var group in SquareGroups)
             {

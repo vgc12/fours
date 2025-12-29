@@ -19,7 +19,7 @@ namespace Board
         private int _movesRemaining = 10;
         private string _gridBeforeMoveSnapshot = string.Empty;
 
-        [SerializeField] private bool _enableUndo = true;
+        [SerializeField] private bool enableUndo = true;
         [SerializeField] private int maxUndoHistory = 50;
 
         public Dot SelectedDot { get; set; }
@@ -34,6 +34,7 @@ namespace Board
             base.Start();
             InitializeCommandSystem();
             InitializeInput();
+            _gridBeforeMoveSnapshot = GetGridStateSnapshot();
          
         }
          
@@ -57,7 +58,7 @@ namespace Board
 
         private void InitializeCommandSystem()
         {
-            if (!_enableUndo) return;
+            if (!enableUndo) return;
             _commandManager = new CommandManager(maxUndoHistory);
 
             _commandManager.OnCommandExecuted += OnCommandExecuted;
@@ -78,19 +79,19 @@ namespace Board
             Vector2 mousePosition = Pointer.current.position.value;
             var clickedDot = _inputHandler.GetDotAtScreenPosition(mousePosition);
 
-            if (_enableUndo && _commandManager != null && clickedDot != null)
+            if (enableUndo && _commandManager != null && clickedDot != null)
             {
                 Logger.Log("Clicked on dot");
                 
                 // Check if this is a NEW group selection (not clicking the same dot again)
                 bool isNewGroupSelection = SelectedDot == null || 
-                    (clickedDot != SelectedDot && clickedDot.squareGroup != SelectedDot.squareGroup);
+                    (clickedDot != SelectedDot && clickedDot.SquareGroup != SelectedDot.SquareGroup);
                 
                 var selectCommand = new SelectDotCommand(this, clickedDot);
                 await _commandManager.ExecuteCommand(selectCommand);
-                
+                var currentGridSnapshot = GetGridStateSnapshot();
                 // If a new group was just selected, take a snapshot and decrement moves
-                if (isNewGroupSelection && SelectedDot != null && PreviouslySelectedDot != null && _gridBeforeMoveSnapshot != GetGridStateSnapshot())
+                if (isNewGroupSelection && SelectedDot != null && PreviouslySelectedDot != null && _gridBeforeMoveSnapshot != currentGridSnapshot)
                 {
                     _gridBeforeMoveSnapshot = GetGridStateSnapshot();
                     Logger.Log("Snapshot taken for new group selection");
@@ -103,16 +104,17 @@ namespace Board
             {
                 Logger.Log("Clicked on dot but now rotating");
                 await ExecuteRotation();
+              
             }
         }
 
         public async Task ExecuteRotation()
         {
-            if (SelectedDot?.squareGroup == null || IsRotating) return;
+            if (SelectedDot?.SquareGroup == null || IsRotating) return;
 
-            var rotateCommand = new RotateGroupCommand(SelectedDot.squareGroup, GridData, RotationDirection.Clockwise);
+            var rotateCommand = new RotateGroupCommand(SelectedDot.SquareGroup, GridData, RotationDirection.Clockwise);
 
-            if (_enableUndo && _commandManager != null)
+            if (enableUndo && _commandManager != null)
             {
                 var success = await _commandManager.ExecuteCommand(rotateCommand);
                 if (success)
@@ -128,6 +130,7 @@ namespace Board
                     CompleteRotation();
                 }
             }
+            EventBus<GroupRotatedEvent>.Raise(new GroupRotatedEvent( SelectedDot,GetGridStateSnapshot()));
         }
 
         private void CompleteRotation()
@@ -143,19 +146,20 @@ namespace Board
             if (_movesRemaining <= 0) return;
             _movesRemaining--;
      
-            EventBus.EventBus<PlayerMovedEvent>.Raise(new PlayerMovedEvent(GetGridStateSnapshot(), _movesRemaining));
+            EventBus<PlayerMovedEvent>.Raise(new PlayerMovedEvent(GetGridStateSnapshot(), _movesRemaining));
             Logger.Log($"Move used: {reason}. Moves remaining: {_movesRemaining}");
-                
-            if (_movesRemaining == 0)
+
+            if (_movesRemaining != 0)
             {
-                Logger.Log("No moves remaining!");
-                // You can add game over logic here
-                EventBus<LevelLostEvent>.Raise(new());
+                return;
             }
+
+            Logger.Log("No moves remaining!");
+            // You can add game over logic here
+            EventBus<LevelLostEvent>.Raise(new LevelLostEvent());
+
         }
-
-     
-
+        
         public void SetSelectedDot(Dot dot)
         {
             SelectedDot = dot;
@@ -218,18 +222,12 @@ namespace Board
                 _commandManager.OnCommandRedone -= OnCommandRedone;
             }
 
-            if (_playerInputActions != null)
-            {
-                _playerInputActions.UI.Click.canceled -= OnClick;
-                _playerInputActions.UI.Disable();
-                _playerInputActions.Disable();
-                _playerInputActions?.Dispose();
-            }
+            if (_playerInputActions == null) return;
+            
+            _playerInputActions.UI.Click.canceled -= OnClick;
+            _playerInputActions.UI.Disable();
+            _playerInputActions.Disable();
+            _playerInputActions?.Dispose();
         }
-    }
-
-    public struct LevelLostEvent : IEvent
-    {
-         
     }
 }

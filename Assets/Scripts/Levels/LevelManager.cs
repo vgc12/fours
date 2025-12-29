@@ -1,18 +1,28 @@
 ﻿using System.Collections.Generic;
 using Attributes;
 using Board;
+using EventBus;
+using Reflex.Attributes;
 using Singletons;
 using UI.States;
 using UnityEngine;
+using ILogger = Logging.ILogger;
 
 namespace Levels
 {
-    public sealed class LevelManager : PersistentSingleton<LevelManager>
+    public sealed class LevelManager : PersistentSingleton<LevelManager>, ILevelManager
     {
-        [SerializeField] private List<LevelData> levels;
+        [ScriptableObjectDropdown, SerializeField]
+        private List<LevelData> levels;
+
         [Required, SerializeField] private SpriteGrid playableGrid;
         [Required, SerializeField] private SpriteGrid targetGrid;
         public LevelData CurrentLevelData { get; private set; }
+
+
+        [Inject] private readonly ILogger _logger;
+
+        public List<LevelData> Levels => levels;
 
 
         [ContextMenu("Load Level")]
@@ -24,41 +34,34 @@ namespace Levels
                 return;
             }
 
-
             playableGrid.ClearGrid();
             targetGrid.ClearGrid();
-
 
             var targetSquares = level.GetAllSquares(true);
             var initialSquares = level.GetAllSquares(false);
 
-            LoadIntoGrid(initialSquares, playableGrid);
-            LoadIntoGrid(targetSquares, targetGrid);
+            playableGrid.LoadIntoGrid(initialSquares);
+            targetGrid.LoadIntoGrid(targetSquares);
 
             playableGrid.Initialize();
             targetGrid.Initialize();
 
 
             var activeCount = level.GetActiveSquares(true).Count;
-            Debug.Log(
+            _logger.Log(
                 $"Loaded {targetSquares.Count} squares ({activeCount} active, {targetSquares.Count - activeCount} inactive)");
             EventBus.EventBus<LevelLoadedEvent>.Raise(new LevelLoadedEvent(level));
-
         }
 
-        public static void LoadIntoGrid(List<LevelData.SquareData> squares, SpriteGrid grid)
+
+        private EventBinding<GroupRotatedEvent> _groupRotatedBinding;
+
+        
+        private void CheckLevelWin(GroupRotatedEvent obj)
         {
-            squares.Sort((a, b) =>
+            if (targetGrid.MatchesGrid(obj.GridSnapshot))
             {
-                var rowCompare = a.id.row.CompareTo(b.id.row);
-                return rowCompare != 0 ? rowCompare : a.id.column.CompareTo(b.id.column);
-            });
-
-
-            foreach (var squareData in squares)
-            {
-                Square.Create(new GridIndex(squareData.id.row, squareData.id.column), squareData.color,
-                    squareData.inactive, grid.transform);
+                EventBus<LevelCompletedEvent>.Raise(new LevelCompletedEvent());
             }
         }
 
@@ -66,9 +69,12 @@ namespace Levels
         {
             base.Awake();
             CurrentLevelData = levels.Count > 0 ? levels[0] : null;
- 
+            _groupRotatedBinding = new EventBinding<GroupRotatedEvent>(CheckLevelWin);
+            EventBus<GroupRotatedEvent>.Register(_groupRotatedBinding);
         }
     }
-    
-    
+
+    public struct LevelCompletedEvent : IEvent
+    {
+    }
 }

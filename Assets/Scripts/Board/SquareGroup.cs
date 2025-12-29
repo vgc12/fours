@@ -52,6 +52,15 @@ namespace Board
 
 
         }
+        
+        public void Scale(Vector3 newScale)
+        {
+            TopLeft.transform.localScale = newScale;
+            TopRight.transform.localScale = newScale;
+            BottomLeft.transform.localScale = newScale;
+            BottomRight.transform.localScale = newScale;
+         
+        }
 
         
         public async UniTask RotateAsync( RotationDirection direction, CancellationTokenSource cancellationTokenSource = null)

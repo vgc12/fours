@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Levels
 {
+    
     [CreateAssetMenu(fileName = "NewLevel", menuName = "Board/Level Data")]
     public sealed class LevelData : ScriptableObject
     {
@@ -36,9 +37,13 @@ namespace Levels
             }
         }
         
+        
         public int rows = 4;
         public int columns = 4;
         public int movesAllowed = 10;
+        public int movesForMaxStars = 5;
+        public int movesForMidStars = 7;
+        public int movesForMinStars = 8;
         
         // Initial grid state (starting configuration)
         public List<SquareData> initialSquares = new();

@@ -1,3 +1,4 @@
+using Levels;
 using Logging;
 using Reflex.Core;
 using UnityEngine;
@@ -9,8 +10,9 @@ namespace DependencyInjection
     {
         public void InstallBindings(ContainerBuilder builder)
         {
+            builder.AddSingleton(FoursLogger.Instance, typeof(ILogger), typeof(FoursLogger));
+            builder.AddSingleton(LevelManager.Instance, typeof(LevelManager), typeof(ILevelManager));
 
-            builder.AddSingleton(typeof(FoursLogger), typeof(ILogger), typeof(FoursLogger));
         }
     }
 }

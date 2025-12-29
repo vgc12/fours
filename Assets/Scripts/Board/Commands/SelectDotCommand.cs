@@ -27,8 +27,13 @@ namespace Board.Commands
             
             try
             {
+                // Scale previous squares back to normal
+            
+
                 _grid.PreviouslySelectedDot = _previouslySelectedDot;
                 _grid.SelectedDot = _dotToSelect;
+        
+                
                 return true;
             }
             catch (Exception ex)
@@ -37,7 +42,7 @@ namespace Board.Commands
                 return false;
             }
         }
-
+  
         public override async UniTask<bool> Undo()
         {
             try
