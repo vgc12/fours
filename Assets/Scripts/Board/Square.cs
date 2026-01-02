@@ -61,7 +61,17 @@ namespace Board
 
             return square;
         }
-        
-        
+
+
+        public void AddRgbOffset(Color colorOffset)
+        {
+            var originalColor = spriteRenderer.color;
+            spriteRenderer.color = new Color(
+                Mathf.Clamp01(originalColor.r + colorOffset.r),
+                Mathf.Clamp01(originalColor.g + colorOffset.g),
+                Mathf.Clamp01(originalColor.b + colorOffset.b),
+                originalColor.a
+            );
+        }
     }
 }

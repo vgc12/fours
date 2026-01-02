@@ -1,6 +1,8 @@
 ﻿using System.Threading.Tasks;
 using Board.Commands;
 using EventBus;
+using Player.Input;
+using Reflex.Attributes;
 using UI.States;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -14,7 +16,8 @@ namespace Board
     {
         private GridInputHandler _inputHandler;
         private DotManager _dotManager;
-        private PlayerInputActions _playerInputActions;
+        [Inject]
+        private IInputManager _inputManager;
         private CommandManager _commandManager;
         private int _movesRemaining = 10;
         private string _gridBeforeMoveSnapshot = string.Empty;
@@ -38,7 +41,6 @@ namespace Board
          
         }
          
-
         public override void Initialize()
         {
             base.Initialize();
@@ -51,11 +53,7 @@ namespace Board
             _inputHandler = new GridInputHandler(Camera.main, LayerMask.GetMask("Dot"));
             _dotManager = new DotManager();
         }
-
         
-        
-   
-
         private void InitializeCommandSystem()
         {
             if (!enableUndo) return;
@@ -68,15 +66,43 @@ namespace Board
 
         private void InitializeInput()
         {
-            _playerInputActions = new PlayerInputActions();
-            _playerInputActions.UI.Enable();
-            _playerInputActions.UI.Click.canceled += OnClick;
+            _inputManager.Tap += async () =>
+            {
+                await ExecuteSelect();
+            };
+
+            _inputManager.Tap += async () => await ExecuteSelect();
+            
+            _inputManager.LeftClick += async() =>
+            {
+                await ExecuteSelect();
+                TryRotate(RotationDirection.CounterClockwise);
+            };
+            
+            _inputManager.RightClick += () => TryRotate(RotationDirection.Clockwise);
+            
+            _inputManager.SwipeLeft += () => TryRotate(RotationDirection.CounterClockwise);
+            
+            _inputManager.SwipeRight += () => TryRotate(RotationDirection.Clockwise);
+            
         }
 
-        private async void OnClick(InputAction.CallbackContext obj)
+     
+
+        public async void TryRotate(RotationDirection direction)
         {
-            
-            Vector2 mousePosition = Pointer.current.position.value;
+            if (SelectedDot == null || SelectedDot != PreviouslySelectedDot)
+            {
+                return;
+            }
+
+            Logger.Log("Clicked on dot but now rotating");
+            await ExecuteRotation(direction);
+        }
+
+        private async Task ExecuteSelect()
+        {
+            var mousePosition = Pointer.current.position.value;
             var clickedDot = _inputHandler.GetDotAtScreenPosition(mousePosition);
 
             if (enableUndo && _commandManager != null && clickedDot != null)
@@ -84,8 +110,8 @@ namespace Board
                 Logger.Log("Clicked on dot");
                 
                 // Check if this is a NEW group selection (not clicking the same dot again)
-                bool isNewGroupSelection = SelectedDot == null || 
-                    (clickedDot != SelectedDot && clickedDot.SquareGroup != SelectedDot.SquareGroup);
+                var isNewGroupSelection = SelectedDot == null || 
+                                          (clickedDot != SelectedDot && clickedDot.SquareGroup != SelectedDot.SquareGroup);
                 
                 var selectCommand = new SelectDotCommand(this, clickedDot);
                 await _commandManager.ExecuteCommand(selectCommand);
@@ -98,38 +124,24 @@ namespace Board
                     DecrementMoves("Selected new group");
                 }
             }
-            
-            // If clicking the same dot again, rotate
-            if (SelectedDot != null && SelectedDot == PreviouslySelectedDot)
-            {
-                Logger.Log("Clicked on dot but now rotating");
-                await ExecuteRotation();
-              
-            }
         }
 
-        public async Task ExecuteRotation()
+        public async Task ExecuteRotation(RotationDirection direction)
         {
             if (SelectedDot?.SquareGroup == null || IsRotating) return;
 
-            var rotateCommand = new RotateGroupCommand(SelectedDot.SquareGroup, GridData, RotationDirection.Clockwise);
+            var rotateCommand = new RotateGroupCommand(SelectedDot.SquareGroup, GridData, direction);
 
             if (enableUndo && _commandManager != null)
             {
+                IsRotating = true;
                 var success = await _commandManager.ExecuteCommand(rotateCommand);
                 if (success)
                 {
                     CompleteRotation();
                 }
             }
-            else
-            {
-                var success = await rotateCommand.Execute();
-                if (success)
-                {
-                    CompleteRotation();
-                }
-            }
+    
             EventBus<GroupRotatedEvent>.Raise(new GroupRotatedEvent( SelectedDot,GetGridStateSnapshot()));
         }
 
@@ -221,13 +233,9 @@ namespace Board
                 _commandManager.OnCommandUndone -= OnCommandUndone;
                 _commandManager.OnCommandRedone -= OnCommandRedone;
             }
-
-            if (_playerInputActions == null) return;
             
-            _playerInputActions.UI.Click.canceled -= OnClick;
-            _playerInputActions.UI.Disable();
-            _playerInputActions.Disable();
-            _playerInputActions?.Dispose();
+            
+         
         }
     }
 }

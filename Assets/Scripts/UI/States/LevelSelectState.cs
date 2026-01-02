@@ -1,8 +1,10 @@
-﻿using DependencyInjection;
+﻿using System.Linq;
+using DependencyInjection;
 using Levels;
-using UI.UI.States;
+using TMPro;
+using UnityEngine;
 using UnityEngine.Assertions;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
 
 namespace UI.States
 {
@@ -10,28 +12,30 @@ namespace UI.States
     {
         
         private readonly ILevelManager _levelManager;
-        public LevelSelectState(VisualElement rootElement, UIManager uiManager) : base(rootElement, uiManager)
+        public LevelSelectState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager)
         {
             RuntimeResolver.Instance.TryResolve( out _levelManager);
             Assert.IsNotNull(_levelManager, "LevelSelectState: LevelManager dependency could not be resolved.");
             var levels = _levelManager.Levels;
-            var buttonContainer = RootPageElement.Q<ScrollView>("level-container");
+            var buttonContainer = RootPageElement.GetComponentInChildren<GridLayoutGroup>();
+            var buttonTemplate = RootPageElement.GetComponentInChildren<Button>();
+   
             for (var i = 0; i < levels.Count; i++)
             {
                 var level = levels[i];
-                var button = new Button
-                {
-                    dataSource = level,
-                    text = (i+1).ToString(),
-                };
-                button.AddToClassList("level-button");
-                button.clicked += () =>
+                
+                var button = Object.Instantiate(buttonTemplate, buttonContainer.transform);
+                button.gameObject.SetActive(true);
+                button.onClick.AddListener( () =>
                 {
                     _levelManager.LoadLevel(level);
                     UIManager.SwitchToInGame();
-                };
-                buttonContainer.Add(button);
+                });
+                button.GetComponentInChildren<TMP_Text>().text = level.name;
+
             }
+            
+            buttonTemplate.gameObject.SetActive(false);
         }
     }
 }

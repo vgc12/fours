@@ -23,15 +23,19 @@ namespace Board.Commands
 
         public override async UniTask<bool> Execute()
         {
-        
             
             try
             {
-                // Scale previous squares back to normal
             
-
+                
                 _grid.PreviouslySelectedDot = _previouslySelectedDot;
+                if (_grid.PreviouslySelectedDot != null)
+                {
+                    _grid.PreviouslySelectedDot.SquareGroup.AddRgbOffset(new Color(-0.2f, -0.2f, -0.2f));
+                }
+
                 _grid.SelectedDot = _dotToSelect;
+                _grid.SelectedDot.SquareGroup.AddRgbOffset(new Color(0.2f, 0.2f, 0.2f));
         
                 
                 return true;

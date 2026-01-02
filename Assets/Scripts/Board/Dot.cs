@@ -10,7 +10,16 @@ namespace Board
         private SpriteRenderer _spriteRenderer;
 
 
-        public SquareGroup SquareGroup;
+        private SquareGroup _squareGroup;
+        public SquareGroup SquareGroup 
+        { 
+            get => _squareGroup;
+            set
+            {
+                _squareGroup = value;
+                _squareGroup.AttachedDot = this;
+            }
+        }
 
 
         void Start()

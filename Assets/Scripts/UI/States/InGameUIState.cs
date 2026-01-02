@@ -1,22 +1,31 @@
-﻿using EventBus;
+﻿using DependencyInjection;
+using EventBus;
 using Levels;
-using UI.UI.States;
-using UnityEngine.UIElements;
+using TMPro;
+using UnityEngine;
+
 
 namespace UI.States
 {
     public sealed class InGameUIState : UIBaseState
     {
-        private readonly Label _movesLabel;
+        private readonly TMP_Text _movesLabel;
         private readonly EventBinding<PlayerMovedEvent> _playerMovedEventBinding;
         private readonly EventBinding<LevelLoadedEvent> _levelSelectStateBinding;
+        private readonly LevelManager _levelManager;
 
-        public InGameUIState(VisualElement rootElement, UIManager uiManager) : base(rootElement, uiManager)
+        public InGameUIState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager)
         {
-            _movesLabel = RootPageElement.Q<Label>("moves-label");
+
+            _movesLabel = rootElement.gameObject.GetComponentInChildren<TMP_Text>();
             _playerMovedEventBinding = new EventBinding<PlayerMovedEvent>(OnPlayerMoved);
             _levelSelectStateBinding = new EventBinding<LevelLoadedEvent>(OnLevelLoaded);
-            _movesLabel.text = $"Moves Remaining: {LevelManager.Instance.CurrentLevelData.movesAllowed}" ;
+            RuntimeResolver.Instance.TryResolve(out _levelManager);
+            if (_levelManager.CurrentLevel)
+            {
+                _movesLabel.text = $"Moves Remaining: {_levelManager.CurrentLevel.movesAllowed}";
+            }
+
             EventBus<PlayerMovedEvent>.Register(_playerMovedEventBinding);
             EventBus<LevelLoadedEvent>.Register(_levelSelectStateBinding);
         }

@@ -1,24 +1,26 @@
-﻿using System;
+﻿using System.Linq;
 using Attributes;
 using DependencyInjection;
 using EventBus;
-using Extensions;
 using Levels;
 using Singletons;
 using StateMachine;
 using UI.States;
-using UI.UI.States;
 using UnityEngine;
-using UnityEngine.UIElements;
+using UnityEngine.UI;
+
 
 namespace UI
 {
-    [RequireComponent(typeof(UIDocument))]
     public sealed class UIManager : PersistentSingleton<UIManager>
     {
         private readonly StateMachine.StateMachine _stateMachine = new();
-        private UIDocument _uiDocument;
-        private VisualElement _root;
+        [Required, SerializeField] private GameObject mainMenu;
+        [Required, SerializeField] private GameObject inGameUI;
+        [Required, SerializeField] private GameObject optionsMenu;
+        [Required, SerializeField] private GameObject levelSelectMenu;
+        [Required, SerializeField] private GameObject levelCompleteMenu;
+        [Required, SerializeField] private GameObject levelFailedMenu;
 
         private IState _mainMenuState;
         private IState _optionsState;
@@ -33,18 +35,16 @@ namespace UI
         protected override void Awake()
         {
             base.Awake();
-            _uiDocument = transform.GetOrAdd<UIDocument>();
-            _root = _uiDocument.rootVisualElement;
-            _mainMenuState = new MainMenuState(_root.Q<VisualElement>("main-menu"), this);
-            _inGameState = new InGameUIState(_root.Q<VisualElement>("in-game"), this);
+
+            _mainMenuState = new MainMenuState(mainMenu, this);
+            _inGameState = new InGameUIState(inGameUI, this);
 
             // _optionsState = new OptionsState(_root, this);
-            _levelSelectState = new LevelSelectState(_root.Q<VisualElement>("level-select"), this);
-            _levelCompleteState = new LevelCompleteState(_root.Q<VisualElement>("level-complete"), this);
-            _levelFailedState = new LevelFailedState(_root.Q<VisualElement>("level-failed"), this);
+            _levelSelectState = new LevelSelectState(levelSelectMenu, this);
+            _levelCompleteState = new LevelCompleteState(levelCompleteMenu, this);
+            _levelFailedState = new LevelFailedState(levelFailedMenu, this);
             //_optionsState = new OptionsState(_root.Q<VisualElement>("options"), this);
 
-            
 
             _stateMachine.AddState(_mainMenuState);
             _stateMachine.AddState(_inGameState);
@@ -53,7 +53,7 @@ namespace UI
             _stateMachine.AddState(_levelCompleteState);
             _stateMachine.AddState(_levelFailedState);
             // _stateMachine.AddState(_optionsState);
-            
+
             _stateMachine.SetStateAndEnter(_mainMenuState);
 
             _levelCompletedBinding = new EventBinding<LevelCompletedEvent>(OnLevelCompleted);
@@ -63,21 +63,35 @@ namespace UI
         private void OnLevelCompleted(LevelCompletedEvent obj) { SwitchToLevelComplete(); }
 
 
-        private void Update() => _stateMachine.Update(); 
+        private void Update() => _stateMachine.Update();
 
-        private void FixedUpdate() => _stateMachine.FixedUpdate(); 
+        private void FixedUpdate() => _stateMachine.FixedUpdate();
 
-        public void SwitchToInGame() => _stateMachine.ChangeState(_inGameState); 
+        public void SwitchToInGame() => _stateMachine.ChangeState(_inGameState);
 
-        public void SwitchToMainMenu() => _stateMachine.ChangeState(_mainMenuState); 
+        public void SwitchToMainMenu() => _stateMachine.ChangeState(_mainMenuState);
 
         public void SwitchToLevelComplete() => _stateMachine.ChangeState(_levelCompleteState);
 
         public void SwitchToLevelFailed() => _stateMachine.ChangeState(_levelFailedState);
-        
+
         public void SwitchToLevelSelect() => _stateMachine.ChangeState(_levelSelectState);
 
         public void SwitchToOptions() => _stateMachine.ChangeState(_optionsState);
+        
+        
+        
+        public void ReloadLevel()
+        {
+            var levelManager = LevelManager.Instance;
+            if (levelManager == null || levelManager.CurrentLevel == null)
+            {
+                return;
+            }
+
+            levelManager.LoadLevel(levelManager.CurrentLevel);
+            SwitchToInGame();
+        }
     }
 
     public sealed class LevelCompleteState : UIBaseState
@@ -86,22 +100,35 @@ namespace UI
         private readonly Button _nextLevelButton;
         private readonly Button _mainMenuButton;
 
-        public LevelCompleteState(VisualElement rootElement, UIManager uiManager) : base(rootElement, uiManager)
+        public LevelCompleteState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager)
         {
-             RuntimeResolver.Instance.TryResolve(out _levelManager);
-            _nextLevelButton = RootPageElement.Q<Button>("next-level-button");
-            _mainMenuButton = RootPageElement.Q<Button>("main-menu-button");
+            RuntimeResolver.Instance.TryResolve(out _levelManager);
+            var buttons = RootPageElement.GetComponentsInChildren<Button>();
+            _nextLevelButton = buttons.First(b => b.name == "next-level-button");
+            _mainMenuButton = buttons.First(b => b.name == "main-menu-button");
 
-            var currentLevelIndex = _levelManager.Levels.IndexOf(_levelManager.CurrentLevelData);
-            if (currentLevelIndex + 1 >= _levelManager.Levels.Count)
-                _nextLevelButton.clicked += () => _levelManager.LoadLevel(_levelManager.Levels[0]);
-             else RootPageElement.Remove(_nextLevelButton);
-            _mainMenuButton.clicked += uiManager.SwitchToMainMenu;
+            var nextLevel = _levelManager.NextLevel;
+
+            if (nextLevel == _levelManager.CurrentLevel)
+            {
+                _nextLevelButton.gameObject.SetActive(false);
+            }
+
+            _nextLevelButton.onClick.AddListener(() =>
+            {
+                if (nextLevel == null)
+                {
+                    return;
+                }
+
+                _levelManager.LoadLevel(nextLevel);
+                UIManager.SwitchToInGame();
+            });
         }
     }
 
     public sealed class LevelFailedState : UIBaseState
     {
-        public LevelFailedState(VisualElement rootElement, UIManager uiManager) : base(rootElement, uiManager) { }
+        public LevelFailedState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager) { }
     }
 }

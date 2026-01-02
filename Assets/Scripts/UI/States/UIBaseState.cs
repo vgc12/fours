@@ -1,22 +1,23 @@
 ﻿using StateMachine;
 using UnityEngine;
-using UnityEngine.UIElements;
 using Cursor = UnityEngine.Cursor;
 
-namespace UI.UI.States
+namespace UI.States
 {
     public abstract class UIBaseState : BaseState
     {
-        protected readonly VisualElement RootPageElement;
+        protected readonly GameObject RootPageElement;
  
         protected readonly UIManager UIManager;
 
-        protected UIBaseState(VisualElement rootElement, UIManager uiManager)
+        protected UIBaseState(GameObject rootElement, UIManager uiManager)
         {
             RootPageElement = rootElement;
-    
+
             UIManager = uiManager;
-       
+            
+            rootElement.SetActive(false);
+            
         }
 
         public bool IsActive { get; protected set; }
@@ -26,7 +27,7 @@ namespace UI.UI.States
         public override void Enter()
         {
             IsActive = true;
-            RootPageElement.style.display = DisplayStyle.Flex;
+            RootPageElement.SetActive(true);
             ChangeMouseState();
             
         }
@@ -35,7 +36,7 @@ namespace UI.UI.States
         public override void Exit()
         {
             IsActive = false;
-            RootPageElement.style.display = DisplayStyle.None;
+            RootPageElement.SetActive(false);
         }
 
         /// <summary>
