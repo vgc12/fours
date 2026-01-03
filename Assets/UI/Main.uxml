@@ -1,0 +1,12 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <engine:Template name="Main Menu" src="project://database/Assets/UI/Main%20Menu.uxml?fileID=9197481963319205126&amp;guid=e40a0c02b33288e47a70290496ad2bd5&amp;type=3#Main Menu" />
+    <engine:Template name="In Game" src="project://database/Assets/UI/In%20Game.uxml?fileID=9197481963319205126&amp;guid=1e5ea9cf4224d1d4fa8bd490ab71ecb4&amp;type=3#In Game" />
+    <engine:Template name="Level Complete" src="project://database/Assets/UI/Level%20Complete.uxml?fileID=9197481963319205126&amp;guid=8006f41e32ea11440b2e98fcc3fb3619&amp;type=3#Level Complete" />
+    <engine:Template name="Level Select" src="project://database/Assets/UI/Level%20Select.uxml?fileID=9197481963319205126&amp;guid=d07242f880ca6f34fbeb0e5f2ec13831&amp;type=3#Level Select" />
+    <engine:Template name="Level Failed" src="project://database/Assets/UI/Level%20Failed.uxml?fileID=9197481963319205126&amp;guid=8c46e0b90aba2a04682b42b8e4c6ccc7&amp;type=3#Level Failed" />
+    <engine:Instance template="Main Menu" name="main-menu" style="flex-grow: 1; flex-shrink: 0; display: none;" />
+    <engine:Instance template="In Game" name="in-game" style="display: none; flex-shrink: 0; flex-grow: 1;" />
+    <engine:Instance template="Level Complete" name="level-complete" style="flex-grow: 1; flex-shrink: 0; display: none;" />
+    <engine:Instance template="Level Select" name="level-select" style="flex-grow: 1; flex-shrink: 0; display: none;" />
+    <engine:Instance template="Level Failed" name="level-failed" style="flex-grow: 1; flex-shrink: 0; display: none;" />
+</engine:UXML>

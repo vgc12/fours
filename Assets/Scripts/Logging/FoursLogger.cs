@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Logging
 {
-    public sealed class FoursLogger : Singleton<FoursLogger> , ILogger
+    public sealed class FoursLogger: Singleton<FoursLogger>, ILogger
     {
         public void Log(object message,
             [CallerMemberName] string member = "",

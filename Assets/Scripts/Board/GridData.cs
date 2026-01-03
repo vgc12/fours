@@ -65,7 +65,7 @@ namespace Board
         }
 
 
-        public string GetDebugString()
+        public override string ToString()
         {
             if (_grid == null) return "Grid is null";
 

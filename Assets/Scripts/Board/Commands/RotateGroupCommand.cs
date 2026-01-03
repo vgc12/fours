@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Board.Commands
 {
+    
     public sealed class RotateGroupCommand : BaseCommand
     {
         private readonly SquareGroup _squareGroup;
@@ -21,7 +23,7 @@ namespace Board.Commands
             _direction = direction;
         }
 
-        public override async Task<bool> Execute()
+        public override async UniTask<bool> Execute()
         {
             if (_wasExecuted) return false;
 
@@ -47,7 +49,7 @@ namespace Board.Commands
             }
         }
 
-        public override async Task<bool> Undo()
+        public override async UniTask<bool> Undo()
         {
             if (!_wasExecuted) return false;
 

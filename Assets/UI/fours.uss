@@ -1,0 +1,60 @@
+.play-button {
+}
+
+.fours-button {
+    width: 94%;
+    align-self: center;
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Poppins-Regular.ttf?fileID=12800000&guid=a851575ed1aeba641951135938e8d83f&type=3#Poppins-Regular");
+    background-color: rgb(204, 202, 186);
+    color: rgb(81, 69, 94);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    max-width: 250px;
+    max-height: none;
+    -unity-text-align: upper-center;
+    -unity-font-style: bold;
+    border-left-color: rgb(181, 178, 152);
+    border-right-color: rgb(181, 178, 152);
+    border-top-color: rgb(181, 178, 152);
+    border-bottom-color: rgb(181, 178, 152);
+    border-top-width: 2px;
+    border-right-width: 2px;
+    border-bottom-width: 2px;
+    border-left-width: 2px;
+    height: auto;
+}
+
+.unity-scroll-view__content-container {
+    justify-content: flex-start;
+    align-self: flex-start;
+}
+
+.level-select-button {
+    align-self: center;
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Poppins-Regular.ttf?fileID=12800000&guid=a851575ed1aeba641951135938e8d83f&type=3#Poppins-Regular");
+    background-color: rgb(255, 255, 255);
+    color: rgb(81, 69, 94);
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+    min-width: 45px;
+    min-height: 45px;
+}
+
+.gradient-background {
+    background-image: none;
+    background-color: rgb(204, 202, 186);
+}
+
+.title {
+    align-self: center;
+    -unity-text-align: upper-center;
+    -unity-font-definition: url("project://database/Assets/UI/Fonts/Poppins-Italic.ttf?fileID=12800000&guid=7a07bbcc72458644a99e4eef15a02288&type=3#Poppins-Italic");
+    -unity-font-style: bold;
+    color: rgb(81, 69, 94);
+    width: auto;
+    font-size: 288%;
+}

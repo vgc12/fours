@@ -28,7 +28,8 @@ namespace Board
         
             var dot = dotObject.AddComponent<Dot>();
             dot.config = config;
-            dot.squareGroup = squareGroup;
+            dot.SquareGroup = squareGroup;
+            
         
 
             dotObject.layer = LayerMask.NameToLayer("Dot");

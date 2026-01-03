@@ -1,0 +1,10 @@
+<engine:UXML xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:engine="UnityEngine.UIElements" xmlns:editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/UI/fours.uss?fileID=7433441132597879392&amp;guid=918f92b1122a10a4a9879600145fb718&amp;type=3#fours" />
+    <engine:VisualElement name="root" class="gradient-background" style="flex-grow: 1; flex-shrink: 0;">
+        <engine:Label text="Level Complete!" name="title" class="title" />
+        <engine:VisualElement name="VisualElement" style="flex-grow: 1; justify-content: flex-end; margin-bottom: 15px; flex-shrink: 0;">
+            <engine:Button text="Next Level" name="next-level-button" class="play-button fours-button" />
+            <engine:Button text="Main Menu" name="main-menu-button" class="fours-button" />
+        </engine:VisualElement>
+    </engine:VisualElement>
+</engine:UXML>

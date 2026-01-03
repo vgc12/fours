@@ -1,4 +1,5 @@
 ﻿using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Board.Commands
 {
@@ -7,7 +8,7 @@ namespace Board.Commands
         public abstract string Description { get; }
         public virtual bool CanUndo => true;
         
-        public abstract Task<bool> Execute();
-        public abstract Task<bool> Undo();
+        public abstract UniTask<bool> Execute();
+        public abstract UniTask<bool> Undo();
     }
 }

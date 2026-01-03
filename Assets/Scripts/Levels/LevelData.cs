@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Levels
 {
+    
     [CreateAssetMenu(fileName = "NewLevel", menuName = "Board/Level Data")]
     public sealed class LevelData : ScriptableObject
     {
@@ -36,8 +37,13 @@ namespace Levels
             }
         }
         
+        
         public int rows = 4;
         public int columns = 4;
+        public int movesAllowed = 10;
+        public int movesForMaxStars = 5;
+        public int movesForMidStars = 7;
+        public int movesForMinStars = 8;
         
         // Initial grid state (starting configuration)
         public List<SquareData> initialSquares = new();
@@ -98,11 +104,11 @@ namespace Levels
         
         private void FillListWithInactive(List<SquareData> list, Color inactiveColor)
         {
-            for (int row = 0; row < rows; row++)
+            for (var row = 0; row < rows; row++)
             {
-                for (int col = 0; col < columns; col++)
+                for (var col = 0; col < columns; col++)
                 {
-                    if (!list.Exists(s => (s.id.row == row && s.id.column == col) || s.inactive)) 
+                    if (!list.Exists(s => (s.id.row == row && s.id.column == col))) 
                     {
                         list.Add(new SquareData(row, col, inactiveColor, true) );
                     }

@@ -26,7 +26,7 @@ namespace Board
         {
             for (var i = 0; i < _dots.Count && i < squareGroups.Count; i++)
             {
-                _dots[i].squareGroup = squareGroups[i];
+                _dots[i].SquareGroup = squareGroups[i];
             }
         }
         

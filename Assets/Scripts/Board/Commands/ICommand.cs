@@ -1,11 +1,12 @@
 ﻿using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 
 namespace Board.Commands
 {
     public interface ICommand
     {
-        Task<bool> Execute();
-        Task<bool> Undo();
+        UniTask<bool> Execute();
+        UniTask<bool> Undo();
         string Description { get; }
         bool CanUndo { get; }
     }

@@ -43,7 +43,7 @@ namespace Board.Commands
                     _undoStack.CopyTo(oldCommands, 0);
                     _undoStack.Clear();
                     
-                    for (int i = 1; i < oldCommands.Length; i++)
+                    for (var i = 1; i < oldCommands.Length; i++)
                     {
                         _undoStack.Push(oldCommands[i]);
                     }
@@ -123,7 +123,7 @@ namespace Board.Commands
             var history = new List<string>();
             var commands = _undoStack.ToArray();
             
-            for (int i = 0; i < Math.Min(count, commands.Length); i++)
+            for (var i = 0; i < Math.Min(count, commands.Length); i++)
             {
                 history.Add(commands[i].Description);
             }

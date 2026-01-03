@@ -20,7 +20,7 @@ namespace StateMachine
             _currentState.State?.Update();
         }
 
-        private void ChangeState(IState to)
+        public void ChangeState(IState to)
         {
             if(_currentState.State == to)
                 return;
@@ -61,6 +61,12 @@ namespace StateMachine
         {
             _currentState = _nodes[state.GetType()];
         }
+        
+        public void SetStateAndEnter(IState state)
+        {
+            _currentState = _nodes[state.GetType()];
+            _currentState.State?.Enter();
+        }
 
 
         public void AddTransition(IState from, IState to, IPredicate condition)
@@ -85,6 +91,10 @@ namespace StateMachine
             return node;
         }
 
+        public void AddState(IState state)
+        {
+            GetOrAddNode(state);
+        }
 
         private class StateNode
         {

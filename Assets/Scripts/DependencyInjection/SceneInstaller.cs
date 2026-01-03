@@ -1,5 +1,7 @@
-﻿using Reflex.Core;
+﻿using Logging;
+using Reflex.Core;
 using UnityEngine;
+using ILogger = Logging.ILogger;
 
 namespace DependencyInjection
 {
@@ -7,7 +9,8 @@ namespace DependencyInjection
     {
         public void InstallBindings(ContainerBuilder builder)
         {
-            //   builder.AddSingleton(typeof(InputManager),typeof(InputManager), typeof(IInputService), typeof(IPlayerInput), typeof(IUIInput));
+
+            
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Board.Commands
@@ -18,7 +19,7 @@ namespace Board.Commands
             _executedCommands = new List<ICommand>();
         }
 
-        public override async Task<bool> Execute()
+        public override async UniTask<bool> Execute()
         {
             _executedCommands.Clear();
             
@@ -40,17 +41,17 @@ namespace Board.Commands
             return true;
         }
 
-        public override async Task<bool> Undo()
+        public override async UniTask<bool> Undo()
         {
             return await UndoExecutedCommands();
         }
 
         private async Task<bool> UndoExecutedCommands()
         {
-            bool allSucceeded = true;
+            var allSucceeded = true;
             
             // Undo in reverse order
-            for (int i = _executedCommands.Count - 1; i >= 0; i--)
+            for (var i = _executedCommands.Count - 1; i >= 0; i--)
             {
                 var command = _executedCommands[i];
                 if (command.CanUndo)

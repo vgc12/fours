@@ -1,23 +1,28 @@
+using System;
 using UnityEngine;
 
 namespace Board
 {
     public sealed class Dot : MonoBehaviour
     {
-
         public DotConfig config;
-    
+
 
         private SpriteRenderer _spriteRenderer;
-    
-
-        public SquareGroup squareGroup;
-
-
-
         
-    
-        
+
+        private SquareGroup _squareGroup;
+        public SquareGroup SquareGroup 
+        { 
+            get => _squareGroup;
+            set
+            {
+                _squareGroup = value;
+                _squareGroup.AttachedDot = this;
+            }
+        }
+
+        public Guid Guid => SquareGroup.Id;
         void Start()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -26,8 +31,9 @@ namespace Board
 
         private void Update()
         {
-            if (squareGroup != null){
-                transform.position = squareGroup.CenterPoint;
+            if (SquareGroup != null)
+            {
+                transform.position = SquareGroup.CenterPoint;
             }
         }
 
@@ -36,9 +42,6 @@ namespace Board
         {
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(transform.position, 20f);
-        
         }
-
- 
     }
 }
