@@ -15,7 +15,7 @@ namespace Board
     {
         [SerializeField] protected GridConfig config = new();
 
-        [Inject] public FoursLogger Logger;
+        [Inject] protected readonly FoursLogger Logger;
         
         protected List<Square> Squares;
         protected GridData GridData;
@@ -123,7 +123,7 @@ namespace Board
                 {
                     if (square != null)
                     {
-                        snapshot.Append($"{square.spriteRenderer.color}");
+                        snapshot.Append($"{square.SpriteRenderer.color}");
                     }
                 }
             }

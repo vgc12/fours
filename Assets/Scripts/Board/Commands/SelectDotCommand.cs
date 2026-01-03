@@ -29,15 +29,19 @@ namespace Board.Commands
             
                 
                 _grid.PreviouslySelectedDot = _previouslySelectedDot;
-                if (_grid.PreviouslySelectedDot != null)
-                {
-                    _grid.PreviouslySelectedDot.SquareGroup.AddRgbOffset(new Color(-0.2f, -0.2f, -0.2f));
-                }
+             
+        
 
                 _grid.SelectedDot = _dotToSelect;
-                _grid.SelectedDot.SquareGroup.AddRgbOffset(new Color(0.2f, 0.2f, 0.2f));
-        
-                
+                if (_grid.PreviouslySelectedDot != null && _grid.PreviouslySelectedDot != _dotToSelect  && _grid.PreviouslySelectedDot.SquareGroup.Selected)
+                {
+                   await _grid.PreviouslySelectedDot.SquareGroup.Deselect();
+                }
+                if (!_grid.SelectedDot.SquareGroup.Selected)
+                {
+                    _grid.SelectedDot.SquareGroup.Select();
+                }
+
                 return true;
             }
             catch (Exception ex)

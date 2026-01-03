@@ -19,7 +19,7 @@ namespace Board
                 var row = i / config.columnsPerRow;
                 var column = i % config.columnsPerRow;
                 var gridPoint = GridLayout.CalculateGridPosition(row, column, startPos, transform.position.z);
-                Gizmos.DrawWireSphere(gridPoint, 0.15f); // Different shape for target
+                Gizmos.DrawWireSphere(gridPoint, 0.15f); 
             }
         }
     }

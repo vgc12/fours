@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Board
@@ -8,7 +9,7 @@ namespace Board
 
 
         private SpriteRenderer _spriteRenderer;
-
+        
 
         private SquareGroup _squareGroup;
         public SquareGroup SquareGroup 
@@ -21,7 +22,7 @@ namespace Board
             }
         }
 
-
+        public Guid Guid => SquareGroup.Id;
         void Start()
         {
             _spriteRenderer = GetComponent<SpriteRenderer>();

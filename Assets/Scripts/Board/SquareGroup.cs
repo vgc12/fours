@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
@@ -20,8 +22,12 @@ namespace Board
         public Square BottomLeft;
         public Square BottomRight;
         public Dot AttachedDot;
+        public bool Selected => Squares.Any(s => s.HighlightRenderer.enabled);
         
-        
+        public IReadOnlyList<Square> Squares => new[]
+        {
+            TopLeft, TopRight, BottomLeft, BottomRight
+        };
 
         public bool AnyAreNull => TopLeft == null || TopRight == null || BottomLeft == null || BottomRight == null;
 
@@ -53,14 +59,7 @@ namespace Board
             BottomRight = TopRight;
             TopRight = temp;
         }
-
-        public void Scale(Vector3 newScale)
-        {
-            TopLeft.transform.localScale = newScale;
-            TopRight.transform.localScale = newScale;
-            BottomLeft.transform.localScale = newScale;
-            BottomRight.transform.localScale = newScale;
-        }
+        
 
 
         public async UniTask RotateAsync(
@@ -69,15 +68,16 @@ namespace Board
         {
             AddSortingOrder(10);
 
+            var originalParent = TopLeft.transform.parent;
             SetGroupParents(AttachedDot.transform);
 
             var totalDegrees = 90f * (int)direction;
 
             var originalScale = AttachedDot.transform.localScale;
             var scale = new Vector3(1.2f, 1.2f, 1.0f);
-            var scaleSpeed = .23f;
-            var scaleEase = Ease.InOutCubic;
-            var rotationSpeed = .55f;
+            const float scaleSpeed = .23f;
+            const Ease scaleEase = Ease.InOutCubic;
+            const float rotationSpeed = .55f;
             await Sequence
                  .Create()
                  .Chain(Tween.Scale(AttachedDot.transform, new TweenSettings<Vector3>(scale, duration: scaleSpeed, ease: scaleEase)))
@@ -86,7 +86,7 @@ namespace Board
                  .Chain(Tween.Scale(AttachedDot.transform, new TweenSettings<Vector3>(originalScale, duration: scaleSpeed, ease:scaleEase)));
 
 
-            SetGroupParents(null);
+            SetGroupParents(originalParent);
 
             AddSortingOrder(-10);
         }
@@ -95,17 +95,17 @@ namespace Board
         {
             var renderers = new[]
             {
-                TopLeft.spriteRenderer, TopRight.spriteRenderer, BottomLeft.spriteRenderer, BottomRight.spriteRenderer,
+                TopLeft.SpriteRenderer, TopRight.SpriteRenderer, BottomLeft.SpriteRenderer, BottomRight.SpriteRenderer,
                 AttachedDot.GetComponent<SpriteRenderer>()
             };
             foreach (var renderer in renderers)
             {
-                renderer.sortingOrder = order;
+                renderer.sortingOrder += order;
                 foreach (Transform t in renderer.transform)
                 {
                     if (t.TryGetComponent<SpriteRenderer>(out var childRenderer))
                     {
-                        childRenderer.sortingOrder = order;
+                        childRenderer.sortingOrder += order;
                     }
                 }
             }
@@ -119,12 +119,27 @@ namespace Board
             BottomRight.transform.SetParent(parent, worldPositionStays);
         }
 
-        public void AddRgbOffset(Color colorOffset)
+        public void Select()
         {
-            TopLeft.AddRgbOffset(colorOffset);
-            TopRight.AddRgbOffset(colorOffset);
-            BottomLeft.AddRgbOffset(colorOffset);
-            BottomRight.AddRgbOffset(colorOffset);
+            TopLeft.Select();
+            TopRight.Select();
+            BottomLeft.Select();
+            BottomRight.Select();
+            
+        }
+        
+        public async UniTask Deselect()
+        {
+            var tasks = new[]
+            {
+                TopLeft.Deselect(),
+                TopRight.Deselect(),
+                BottomLeft.Deselect(),
+                BottomRight.Deselect()
+            };
+            await UniTask.WhenAll(tasks);
+           
+      
         }
 
         public async Task RotateCounterClockwise(CancellationTokenSource cancellationTokenSource = null)

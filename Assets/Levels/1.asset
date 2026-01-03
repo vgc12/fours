@@ -15,15 +15,18 @@ MonoBehaviour:
   rows: 3
   columns: 3
   movesAllowed: 10
+  movesForMaxStars: 5
+  movesForMidStars: 7
+  movesForMinStars: 8
   initialSquares:
   - id:
-      row: 0
+      row: 1
       column: 0
     color: {r: 0.43921572, g: 0.6784314, b: 0.29803923, a: 1}
     inactive: 0
   - id:
-      row: 1
-      column: 0
+      row: 2
+      column: 1
     color: {r: 0.43921572, g: 0.6784314, b: 0.29803923, a: 1}
     inactive: 0
   - id:
@@ -33,13 +36,8 @@ MonoBehaviour:
     inactive: 0
   - id:
       row: 2
-      column: 2
-    color: {r: 0.43921572, g: 0.6784314, b: 0.29803923, a: 1}
-    inactive: 0
-  - id:
-      row: 2
-      column: 1
-    color: {r: 0.43921572, g: 0.6784314, b: 0.29803923, a: 1}
+      column: 0
+    color: {r: 0.5764706, g: 0.2784314, b: 0.2784314, a: 1}
     inactive: 0
   - id:
       row: 0
@@ -48,8 +46,8 @@ MonoBehaviour:
     inactive: 0
   - id:
       row: 0
-      column: 1
-    color: {r: 0.5764706, g: 0.2784314, b: 0.2784314, a: 1}
+      column: 0
+    color: {r: 0.43921572, g: 0.6784314, b: 0.29803923, a: 1}
     inactive: 0
   - id:
       row: 1
@@ -57,9 +55,14 @@ MonoBehaviour:
     color: {r: 0.5764706, g: 0.2784314, b: 0.2784314, a: 1}
     inactive: 0
   - id:
-      row: 2
-      column: 0
+      row: 0
+      column: 1
     color: {r: 0.5764706, g: 0.2784314, b: 0.2784314, a: 1}
+    inactive: 0
+  - id:
+      row: 2
+      column: 2
+    color: {r: 0.43921572, g: 0.6784314, b: 0.29803923, a: 1}
     inactive: 0
   targetSquares:
   - id:
