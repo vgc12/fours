@@ -1,15 +1,17 @@
 ﻿using System.Collections.Generic;
+using Attributes;
 using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Board
 {
-    public sealed class DotManager
+    public sealed class DotManager : MonoBehaviour
     {
         private List<Dot> _dots = new();
-
         public IReadOnlyList<Dot> Dots => _dots;
 
+        [SerializeField, Required] private DotFactory dotFactory;
+        
         public void CreateDots(List<SquareGroup> squareGroups)
         {
             ClearDots();
@@ -17,7 +19,7 @@ namespace Board
             _dots = new List<Dot>(squareGroups.Count);
             foreach (var squareGroup in squareGroups)
             {
-                var dot = DotFactory.Instance.CreateDot(squareGroup);
+                var dot = dotFactory.Create(squareGroup);
                 _dots.Add(dot);
             }
         }

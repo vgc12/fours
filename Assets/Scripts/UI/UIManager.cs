@@ -107,15 +107,15 @@ namespace UI
             _nextLevelButton = buttons.First(b => b.name == "next-level-button");
             _mainMenuButton = buttons.First(b => b.name == "main-menu-button");
 
-            var nextLevel = _levelManager.NextLevel;
 
-            if (nextLevel == _levelManager.CurrentLevel)
+            if (_levelManager.NextLevel == _levelManager.CurrentLevel)
             {
                 _nextLevelButton.gameObject.SetActive(false);
             }
 
             _nextLevelButton.onClick.AddListener(() =>
             {
+                var nextLevel = _levelManager.NextLevel;
                 if (nextLevel == null)
                 {
                     return;

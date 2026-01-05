@@ -11,7 +11,7 @@ namespace Board.Commands
         private readonly Dot _dotToSelect;
         private readonly Dot _previouslySelectedDot;
 
-        public override string Description => 
+        public override string Description =>
             $"Select dot {(_dotToSelect?.name ?? "none")}";
 
         public SelectDotCommand(PlayableGrid grid, Dot dotToSelect)
@@ -23,23 +23,21 @@ namespace Board.Commands
 
         public override async UniTask<bool> Execute()
         {
-            
             try
             {
-            
-                
                 _grid.PreviouslySelectedDot = _previouslySelectedDot;
-             
-        
+
 
                 _grid.SelectedDot = _dotToSelect;
-                if (_grid.PreviouslySelectedDot != null && _grid.PreviouslySelectedDot != _dotToSelect  && _grid.PreviouslySelectedDot.SquareGroup.Selected)
+                if (_grid.PreviouslySelectedDot != null && _grid.PreviouslySelectedDot != _dotToSelect &&
+                    _grid.PreviouslySelectedDot.SquareGroup.Selected)
                 {
-                   await _grid.PreviouslySelectedDot.SquareGroup.Deselect();
+                    await _grid.PreviouslySelectedDot.SquareGroup.Deselect();
                 }
+
                 if (!_grid.SelectedDot.SquareGroup.Selected)
                 {
-                    _grid.SelectedDot.SquareGroup.Select();
+                    await _grid.SelectedDot.SquareGroup.Select();
                 }
 
                 return true;
@@ -50,19 +48,11 @@ namespace Board.Commands
                 return false;
             }
         }
-  
-        public override async UniTask<bool> Undo()
+
+        public override UniTask<bool> Undo()
         {
-            try
-            {
-                _grid.SelectedDot = _previouslySelectedDot;
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"Failed to undo select dot command: {ex.Message}");
-                return false;
-            }
+            _grid.SelectedDot = _previouslySelectedDot;
+            return UniTask.FromResult(true);
         }
     }
 }

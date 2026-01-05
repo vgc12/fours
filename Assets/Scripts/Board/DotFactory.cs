@@ -1,17 +1,14 @@
-﻿using System.Runtime.InteropServices;
-using Singletons;
-using UnityEngine;
-using UnityEngine.Pool;
+﻿using UnityEngine;
 
 namespace Board
 {
-
-    public sealed class DotFactory : Singleton<DotFactory>
+    [CreateAssetMenu(fileName = "Dot Factory", menuName = "Factories/Dot Factory")]
+    public sealed class DotFactory : ScriptableObject, IFactory<Dot, SquareGroup>
     {
     
         public DotConfig config;
         
-        public Dot CreateDot( SquareGroup squareGroup)
+        public Dot Create(SquareGroup squareGroup)
         {
             var dotObject = new GameObject("Dot")
             {
@@ -20,8 +17,6 @@ namespace Board
                     position = squareGroup.CenterPoint,
                 }
             };
-        
-     
         
             var spriteRenderer = dotObject.AddComponent<SpriteRenderer>();
             spriteRenderer.sprite = config.sprite;

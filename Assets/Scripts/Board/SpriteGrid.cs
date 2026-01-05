@@ -21,6 +21,7 @@ namespace Board
         protected GridData GridData;
         protected GridLayout GridLayout;
         protected List<SquareGroup> SquareGroups;
+        [SerializeField] protected SquareFactory squareSquareFactory;
 
         protected virtual void Start()
         {
@@ -76,8 +77,13 @@ namespace Board
 
             foreach (var squareData in squares)
             {
-                Square.Create(new GridIndex(squareData.id.row, squareData.id.column), squareData.color,
-                    squareData.inactive, transform);
+                var squareParams = new SquareCreationParams()
+                {
+                    Color = squareData.color,
+                    Inactive = squareData.inactive, Parent = transform,
+                    Id = new GridIndex(squareData.id.row, squareData.id.column)
+                };
+                squareSquareFactory.Create(squareParams);
             }
         }
 
@@ -133,16 +139,11 @@ namespace Board
         
         public void ClearGrid()
         {
-            Squares?.Clear();
-
-            while (transform.childCount > 0)
-            {
-                var child = transform.GetChild(0);
-                DestroyImmediate(child.gameObject);
-            }
-
-            GridData = null;
             SquareGroups?.Clear();
+            Squares?.Clear();
+            var gos = GetComponentsInChildren<Transform>().Where(t => t != transform).Select(t => t.gameObject).ToList();
+            gos.ForEach(DestroyImmediate);
+            GridData = null;
         }
 
         protected virtual void OnValidate()

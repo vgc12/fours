@@ -1,4 +1,6 @@
 using System;
+using Cysharp.Threading.Tasks;
+using PrimeTween;
 using UnityEngine;
 
 namespace Board
@@ -43,5 +45,17 @@ namespace Board
             Gizmos.color = Color.blue;
             Gizmos.DrawWireSphere(transform.position, 20f);
         }
+
+        public async UniTask Grow()
+        {
+            await Tween.Scale(transform, config.growScale, config.growDuration);
+        }
+        
+        public async UniTask Shrink()
+        {
+            await Tween.Scale(transform, Vector3.one, config.shrinkDuration);
+        }
+        
+        
     }
 }

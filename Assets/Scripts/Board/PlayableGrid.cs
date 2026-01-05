@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Attributes;
 using Board.Commands;
 using EventBus;
+using Levels;
 using Player.Input;
 using Reflex.Attributes;
 using UI.States;
@@ -16,9 +18,11 @@ namespace Board
     public sealed class PlayableGrid : SpriteGrid
     {
         private GridInputHandler _inputHandler;
-        private DotManager _dotManager;
+        [SerializeField, Required] private DotManager dotManager;
         [Inject]
         private IInputManager _inputManager;
+        [Inject]
+        private readonly ILevelManager _levelManager;
         private CommandManager _commandManager;
         private int _movesRemaining = 10;
         private string _gridBeforeMoveSnapshot = string.Empty;
@@ -33,7 +37,7 @@ namespace Board
         public bool CanRedo => _commandManager?.CanRedo ?? false;
         public int MovesRemaining => _movesRemaining;
 
- 
+        private EventBinding<LevelLoadedEvent> _levelLoadedEvent;
         
         protected override void Start()
         {
@@ -41,20 +45,29 @@ namespace Board
             InitializeCommandSystem();
             InitializeInput();
             _gridBeforeMoveSnapshot = GetGridStateSnapshot();
-         
+            
+            _levelLoadedEvent = new EventBinding<LevelLoadedEvent>(OnLevelLoaded);
+            EventBus<LevelLoadedEvent>.Register(_levelLoadedEvent);
+    
+
         }
-         
+
+        private void OnLevelLoaded(LevelLoadedEvent obj)
+        {
+            _movesRemaining = obj.LevelData.movesAllowed;
+        }
+
         public override void Initialize()
         {
             base.Initialize();
-            _dotManager.CreateDots(SquareGroups);
+            dotManager.CreateDots(SquareGroups);
         }
         
         protected override void InitializeComponents()
         {
             base.InitializeComponents();
             _inputHandler = new GridInputHandler(Camera.main, LayerMask.GetMask("Dot"));
-            _dotManager = new DotManager();
+       
         }
         
         private void InitializeCommandSystem()
@@ -82,7 +95,11 @@ namespace Board
                 TryRotate(RotationDirection.CounterClockwise);
             };
             
-            _inputManager.RightClick += () => TryRotate(RotationDirection.Clockwise);
+            _inputManager.RightClick += async () =>
+            {
+                await ExecuteSelect();
+                TryRotate(RotationDirection.Clockwise);
+            };
             
             _inputManager.SwipeLeft += () => TryRotate(RotationDirection.CounterClockwise);
             
@@ -108,7 +125,7 @@ namespace Board
             var mousePosition = Pointer.current.position.value;
             var clickedDot = _inputHandler.GetDotAtScreenPosition(mousePosition);
 
-            if (enableUndo && _commandManager != null && clickedDot != null)
+            if (enableUndo && _commandManager != null && clickedDot != null && !IsRotating)
             {
                 Logger.Log("Clicked on dot");
                 
@@ -152,7 +169,7 @@ namespace Board
         {
             FindGroups();
             IsRotating = false;
-            _dotManager.ResetDots(SquareGroups);
+            dotManager.ResetDots(SquareGroups);
             Logger.Log(GetAllGroupsDebugString());
         }
 
@@ -187,7 +204,7 @@ namespace Board
             {
                 await _commandManager.UndoLastCommand();
                 FindGroups();
-                _dotManager.ResetDots(SquareGroups);
+                dotManager.ResetDots(SquareGroups);
             }
         }
 
@@ -198,7 +215,7 @@ namespace Board
             {
                 await _commandManager.RedoLastCommand();
                 FindGroups();
-                _dotManager.ResetDots(SquareGroups);
+                dotManager.ResetDots(SquareGroups);
             }
         }
 
@@ -225,20 +242,25 @@ namespace Board
 
         private void OnDisable()
         {
-            _dotManager?.ClearDots();
+            dotManager?.ClearDots();
         }
 
         private void OnDestroy()
         {
-            if (_commandManager != null)
+            EventBus<LevelLoadedEvent>.Deregister(_levelLoadedEvent);
+            
+            if (_commandManager == null)
             {
-                _commandManager.OnCommandExecuted -= OnCommandExecuted;
-                _commandManager.OnCommandUndone -= OnCommandUndone;
-                _commandManager.OnCommandRedone -= OnCommandRedone;
+                return;
             }
-            
-            
-         
+
+            _commandManager.OnCommandExecuted -= OnCommandExecuted;
+            _commandManager.OnCommandUndone -= OnCommandUndone;
+            _commandManager.OnCommandRedone -= OnCommandRedone;
+
+
+
+
         }
     }
 }

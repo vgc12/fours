@@ -1,8 +1,10 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "DotConfig", menuName = "Scriptable Objects/DotConfig")]
+[CreateAssetMenu(fileName = "Dot Config", menuName = "Scriptable Objects/DotConfig")]
 public sealed class DotConfig : ScriptableObject
 {
     public Sprite sprite;
-
+    public Vector3 growScale;
+    public float growDuration;
+    public float shrinkDuration;
 }

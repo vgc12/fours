@@ -22,6 +22,7 @@ namespace Board
         public Square BottomLeft;
         public Square BottomRight;
         public Dot AttachedDot;
+        public Transform OriginalParent;
         public bool Selected => Squares.Any(s => s.HighlightRenderer.enabled);
         
         public IReadOnlyList<Square> Squares => new[]
@@ -44,6 +45,7 @@ namespace Board
             BottomRight = bottomRight;
             CenterPoint = (TopLeft.transform.position + BottomRight.transform.position + TopRight.transform.position +
                            BottomLeft.transform.position) / 4f;
+            OriginalParent = TopLeft.transform.parent;
 
             Id = Guid.NewGuid();
         }
@@ -93,22 +95,19 @@ namespace Board
 
         public void AddSortingOrder(int order)
         {
-            var renderers = new[]
+                AttachedDot.GetComponent<SpriteRenderer>().sortingOrder += order;
+            var squares = new[]
             {
-                TopLeft.SpriteRenderer, TopRight.SpriteRenderer, BottomLeft.SpriteRenderer, BottomRight.SpriteRenderer,
-                AttachedDot.GetComponent<SpriteRenderer>()
+                TopLeft, TopRight, BottomLeft, BottomRight,
             };
-            foreach (var renderer in renderers)
+            
+            foreach (var square in squares)
             {
-                renderer.sortingOrder += order;
-                foreach (Transform t in renderer.transform)
-                {
-                    if (t.TryGetComponent<SpriteRenderer>(out var childRenderer))
-                    {
-                        childRenderer.sortingOrder += order;
-                    }
-                }
+                square.SpriteRenderer.sortingOrder += order;
+                square.HighlightRenderer.sortingOrder += order;
+                square.OutlineRenderer.sortingOrder += order;
             }
+            
         }
 
         public void SetGroupParents(Transform parent, bool worldPositionStays = true)
@@ -119,12 +118,20 @@ namespace Board
             BottomRight.transform.SetParent(parent, worldPositionStays);
         }
 
-        public void Select()
+        public async UniTask Select()
         {
-            TopLeft.Select();
-            TopRight.Select();
-            BottomLeft.Select();
-            BottomRight.Select();
+            var tasks = new[]
+            {
+                TopLeft.Select(),
+                TopRight.Select(),
+                BottomLeft.Select(),
+                BottomRight.Select(),
+                AttachedDot.Grow()
+            };
+            await UniTask.WhenAll(tasks);
+            
+            SetGroupParents(AttachedDot.transform);
+            
             
         }
         
@@ -138,6 +145,8 @@ namespace Board
                 BottomRight.Deselect()
             };
             await UniTask.WhenAll(tasks);
+            
+            SetGroupParents(OriginalParent);
            
       
         }

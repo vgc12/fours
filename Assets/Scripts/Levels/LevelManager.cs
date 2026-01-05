@@ -48,6 +48,7 @@ namespace Levels
             playableGrid.Initialize();
             targetGrid.Initialize();
 
+            CurrentLevel = level;
 
             var activeCount = level.GetActiveSquares(true).Count;
             _logger.Log(

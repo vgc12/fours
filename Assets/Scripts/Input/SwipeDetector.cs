@@ -4,7 +4,7 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 
-public sealed class SwipeDetector : MonoBehaviour, ISwipeDetector
+public sealed class SwipeDetector :  ISwipeDetector
 {
    
     private Vector2 _startPosition;
