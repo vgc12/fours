@@ -25,12 +25,12 @@ namespace Board.Commands
         {
             try
             {
+             
                 _grid.PreviouslySelectedDot = _previouslySelectedDot;
 
 
                 _grid.SelectedDot = _dotToSelect;
-                if (_grid.PreviouslySelectedDot != null && _grid.PreviouslySelectedDot != _dotToSelect &&
-                    _grid.PreviouslySelectedDot.SquareGroup.Selected)
+                if (_grid.PreviouslySelectedDot != null )
                 {
                     await _grid.PreviouslySelectedDot.SquareGroup.Deselect();
                 }

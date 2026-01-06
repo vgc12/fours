@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Attributes;
 using Board.Commands;
+using Cysharp.Threading.Tasks;
 using EventBus;
 using Levels;
 using Player.Input;
@@ -92,26 +93,26 @@ namespace Board
             _inputManager.LeftClick += async() =>
             {
                 await ExecuteSelect();
-                TryRotate(RotationDirection.CounterClockwise);
+                await TryRotate(RotationDirection.CounterClockwise);
             };
             
             _inputManager.RightClick += async () =>
             {
                 await ExecuteSelect();
-                TryRotate(RotationDirection.Clockwise);
+                await TryRotate(RotationDirection.Clockwise);
             };
             
-            _inputManager.SwipeLeft += () => TryRotate(RotationDirection.CounterClockwise);
+            _inputManager.SwipeLeft += async () => await TryRotate(RotationDirection.CounterClockwise);
             
-            _inputManager.SwipeRight += () => TryRotate(RotationDirection.Clockwise);
+            _inputManager.SwipeRight += async () => await TryRotate(RotationDirection.Clockwise);
             
         }
 
      
 
-        public async void TryRotate(RotationDirection direction)
+        public async UniTask TryRotate(RotationDirection direction)
         {
-            if (SelectedDot == null || SelectedDot != PreviouslySelectedDot)
+            if (SelectedDot == null || SelectedDot != PreviouslySelectedDot || IsRotating)
             {
                 return;
             }
@@ -168,9 +169,9 @@ namespace Board
         private void CompleteRotation()
         {
             FindGroups();
-            IsRotating = false;
             dotManager.ResetDots(SquareGroups);
             Logger.Log(GetAllGroupsDebugString());
+            IsRotating = false;
         }
 
         private void DecrementMoves(string reason)
@@ -192,10 +193,6 @@ namespace Board
 
         }
         
-        public void SetSelectedDot(Dot dot)
-        {
-            SelectedDot = dot;
-        }
 
         [ContextMenu("Undo Last Action")]
         public async Task UndoLastAction()

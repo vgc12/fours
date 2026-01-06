@@ -136,6 +136,7 @@ namespace Board
         
         public async UniTask Deselect()
         {
+            SetGroupParents(OriginalParent);
             var tasks = new[]
             {
                 TopLeft.Deselect(),
@@ -144,7 +145,6 @@ namespace Board
                 BottomRight.Deselect(),
             };
             await UniTask.WhenAll(tasks);
-            SetGroupParents(OriginalParent);
             
            
       
