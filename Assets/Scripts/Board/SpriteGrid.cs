@@ -13,7 +13,7 @@ namespace Board
     // Base class with shared grid functionality
     public abstract class SpriteGrid : MonoBehaviour
     {
-        [SerializeField] protected GridConfig config = new();
+        [SerializeField] public GridConfig config = new();
 
         [Inject] protected readonly FoursLogger Logger;
         

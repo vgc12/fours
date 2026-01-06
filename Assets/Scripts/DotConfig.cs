@@ -7,4 +7,5 @@ public sealed class DotConfig : ScriptableObject
     public Vector3 growScale;
     public float growDuration;
     public float shrinkDuration;
+    public int sortOrder;
 }

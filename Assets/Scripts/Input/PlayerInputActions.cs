@@ -83,6 +83,45 @@ namespace Input
                     ""isPartOfComposite"": false
                 }
             ]
+        },
+        {
+            ""name"": ""UI"",
+            ""id"": ""622077e7-aa60-486f-96fe-bbd199103903"",
+            ""actions"": [
+                {
+                    ""name"": ""UIClick"",
+                    ""type"": ""Value"",
+                    ""id"": ""2c4b0ec0-ea6c-47a7-a0e3-2de763f45c29"",
+                    ""expectedControlType"": ""Axis"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": true
+                }
+            ],
+            ""bindings"": [
+                {
+                    ""name"": """",
+                    ""id"": ""2fc005ff-2523-4392-a3f1-c32d888309ea"",
+                    ""path"": ""<Mouse>/leftButton"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""UIClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""6aad02a3-e44e-4f6e-8ec1-cf1e0ce20718"",
+                    ""path"": ""<Touchscreen>/Press"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Touch"",
+                    ""action"": ""UIClick"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                }
+            ]
         }
     ],
     ""controlSchemes"": [
@@ -152,11 +191,15 @@ namespace Input
             m_Main = asset.FindActionMap("Main", throwIfNotFound: true);
             m_Main_Click = m_Main.FindAction("Click", throwIfNotFound: true);
             m_Main_RightClick = m_Main.FindAction("RightClick", throwIfNotFound: true);
+            // UI
+            m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
+            m_UI_UIClick = m_UI.FindAction("UIClick", throwIfNotFound: true);
         }
 
         ~@PlayerInputActions()
         {
             UnityEngine.Debug.Assert(!m_Main.enabled, "This will cause a leak and performance issues, PlayerInputActions.Main.Disable() has not been called.");
+            UnityEngine.Debug.Assert(!m_UI.enabled, "This will cause a leak and performance issues, PlayerInputActions.UI.Disable() has not been called.");
         }
 
         public void Dispose()
@@ -268,6 +311,52 @@ namespace Input
             }
         }
         public MainActions @Main => new MainActions(this);
+
+        // UI
+        private readonly InputActionMap m_UI;
+        private List<IUIActions> m_UIActionsCallbackInterfaces = new List<IUIActions>();
+        private readonly InputAction m_UI_UIClick;
+        public struct UIActions
+        {
+            private @PlayerInputActions m_Wrapper;
+            public UIActions(@PlayerInputActions wrapper) { m_Wrapper = wrapper; }
+            public InputAction @UIClick => m_Wrapper.m_UI_UIClick;
+            public InputActionMap Get() { return m_Wrapper.m_UI; }
+            public void Enable() { Get().Enable(); }
+            public void Disable() { Get().Disable(); }
+            public bool enabled => Get().enabled;
+            public static implicit operator InputActionMap(UIActions set) { return set.Get(); }
+            public void AddCallbacks(IUIActions instance)
+            {
+                if (instance == null || m_Wrapper.m_UIActionsCallbackInterfaces.Contains(instance)) return;
+                m_Wrapper.m_UIActionsCallbackInterfaces.Add(instance);
+                @UIClick.started += instance.OnUIClick;
+                @UIClick.performed += instance.OnUIClick;
+                @UIClick.canceled += instance.OnUIClick;
+            }
+
+            private void UnregisterCallbacks(IUIActions instance)
+            {
+                @UIClick.started -= instance.OnUIClick;
+                @UIClick.performed -= instance.OnUIClick;
+                @UIClick.canceled -= instance.OnUIClick;
+            }
+
+            public void RemoveCallbacks(IUIActions instance)
+            {
+                if (m_Wrapper.m_UIActionsCallbackInterfaces.Remove(instance))
+                    UnregisterCallbacks(instance);
+            }
+
+            public void SetCallbacks(IUIActions instance)
+            {
+                foreach (var item in m_Wrapper.m_UIActionsCallbackInterfaces)
+                    UnregisterCallbacks(item);
+                m_Wrapper.m_UIActionsCallbackInterfaces.Clear();
+                AddCallbacks(instance);
+            }
+        }
+        public UIActions @UI => new UIActions(this);
         private int m_KeyboardMouseSchemeIndex = -1;
         public InputControlScheme KeyboardMouseScheme
         {
@@ -317,6 +406,10 @@ namespace Input
         {
             void OnClick(InputAction.CallbackContext context);
             void OnRightClick(InputAction.CallbackContext context);
+        }
+        public interface IUIActions
+        {
+            void OnUIClick(InputAction.CallbackContext context);
         }
     }
 }

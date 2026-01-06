@@ -22,7 +22,7 @@ namespace Board
         public bool Inactive
         {
             get => inactive;
-            set
+            private set
             {
                 inactive = value;
                 if (SpriteRenderer != null)
@@ -32,12 +32,12 @@ namespace Board
 
         private void Awake() { SpriteRenderer = GetComponent<SpriteRenderer>(); }
 
-        public void Initialize(GridIndex id, Color color, bool inactive)
+        public void Initialize(GridIndex id, Color color, bool inact)
         {
             Id = id;
             gameObject.name = $"Square{id}";
             SpriteRenderer.color = color;
-            Inactive = inactive;
+            Inactive = inact;
         }
 
 

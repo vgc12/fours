@@ -36,22 +36,16 @@ namespace Levels
         private bool _showInactiveSettings = true;
         private bool _showColorPalette = true;
 
-        // Color palette
-        private List<Color> _colorPalette = new List<Color>
-        {
-            Color.red,
-            Color.blue,
-            Color.green,
-            Color.yellow,
-            new(1f, 0.5f, 0f), // Orange
-            Color.magenta,
-            Color.cyan,
-            Color.white
-        };
+ 
 
         private TargetGrid _targetGrid;
         private int _movesAllowed;
+        private int _movesForMaxStars = 5;
+        private int _movesForMidStars = 7;
+        private int _movesForMinStars = 8;
         private SquareFactory _squareFactory;
+
+        private ColorPalette _colorPalette;
 
         [MenuItem("Tools/Board/Level Editor")]
         public static void ShowWindow()
@@ -63,6 +57,7 @@ namespace Levels
 
         private void OnGUI()
         {
+            _colorPalette = Resources.Load<ColorPalette>("ColorPalette");
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
             EditorGUILayout.Space(5);
@@ -106,6 +101,10 @@ namespace Levels
             EditorGUILayout.EndHorizontal();
 
             _movesAllowed = EditorGUILayout.IntField("Allowed Moves", _movesAllowed);
+            _movesForMaxStars = EditorGUILayout.IntField("Moves for 3 Stars", _movesForMaxStars);
+            _movesForMidStars = EditorGUILayout.IntField("Moves for 2 Stars", _movesForMidStars);
+            _movesForMinStars = EditorGUILayout.IntField("Moves for 1 Star", _movesForMinStars);
+            
 
             if (_currentLevel != null)
             {
@@ -223,20 +222,20 @@ namespace Levels
             EditorGUILayout.BeginVertical("box");
 
             var buttonsPerRow = 4;
-            for (var i = 0; i < _colorPalette.Count; i += buttonsPerRow)
+            for (var i = 0; i < _colorPalette.colors.Count; i += buttonsPerRow)
             {
                 EditorGUILayout.BeginHorizontal();
-                for (var j = 0; j < buttonsPerRow && (i + j) < _colorPalette.Count; j++)
+                for (var j = 0; j < buttonsPerRow && (i + j) < _colorPalette.colors.Count; j++)
                 {
                     var index = i + j;
 
                     EditorGUILayout.BeginVertical();
 
                     // Color button
-                    GUI.backgroundColor = _colorPalette[index];
+                    GUI.backgroundColor = _colorPalette.colors[index];
                     if (GUILayout.Button("", GUILayout.Width(40), GUILayout.Height(40)))
                     {
-                        _currentColor = _colorPalette[index];
+                        _currentColor = _colorPalette.colors[index];
                     }
 
                     GUI.backgroundColor = Color.white;
@@ -244,7 +243,7 @@ namespace Levels
                     // Small remove button below color
                     if (GUILayout.Button("×", GUILayout.Width(40), GUILayout.Height(15)))
                     {
-                        _colorPalette.RemoveAt(index);
+                        _colorPalette.colors.RemoveAt(index);
                         return; // Exit to avoid index issues
                     }
 
@@ -264,7 +263,7 @@ namespace Levels
 
             if (GUILayout.Button("Add to Palette", GUILayout.Height(20)))
             {
-                _colorPalette.Add(_currentColor);
+                _colorPalette.colors.Add(_currentColor);
             }
 
             EditorGUILayout.EndHorizontal();
@@ -457,27 +456,32 @@ namespace Levels
         {
             var path = EditorUtility.SaveFilePanelInProject("Create New Level", "NewLevel", "asset",
                 "Create a new level data file");
-            if (!string.IsNullOrEmpty(path))
+            if (string.IsNullOrEmpty(path))
             {
-                _currentLevel = CreateInstance<LevelData>();
-                _currentLevel.rows = _gridRows;
-                _currentLevel.columns = _gridColumns;
-                _currentLevel.movesAllowed = _movesAllowed;
-                AssetDatabase.CreateAsset(_currentLevel, path);
-                AssetDatabase.SaveAssets();
-                EditorUtility.FocusProjectWindow();
-                Selection.activeObject = _currentLevel;
+                return;
             }
+
+            _currentLevel = CreateInstance<LevelData>();
+            AssetDatabase.CreateAsset(_currentLevel, path);
+            AssetDatabase.SaveAssets();
+            EditorUtility.FocusProjectWindow();
+            Selection.activeObject = _currentLevel;
         }
 
         private void LoadLevel()
         {
-            if (_currentLevel != null)
+            if (_currentLevel == null)
             {
-                _gridRows = _currentLevel.rows;
-                _gridColumns = _currentLevel.columns;
-                _movesAllowed = _currentLevel.movesAllowed;
+                return;
             }
+
+            _gridRows = _currentLevel.rows;
+            _gridColumns = _currentLevel.columns;
+            _movesAllowed = _currentLevel.movesAllowed;
+            _movesForMinStars = _currentLevel.movesForMinStars;
+            _movesForMidStars = _currentLevel.movesForMidStars;
+            _movesForMaxStars = _currentLevel.movesForMaxStars;
+            Repaint();
         }
 
         private void PlaceSquare(int row, int col, bool isTarget)
@@ -567,17 +571,14 @@ namespace Levels
         {
             EditorUtility.SetDirty(_currentLevel);
             AssetDatabase.SaveAssets();
-            var gridConfigField = typeof(SpriteGrid).GetField("config",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (gridConfigField != null)
-            {
-                var config = (GridConfig)gridConfigField.GetValue(_playableGrid);
-                config.columnsPerRow = _gridColumns;
-            }
+            
 
             _currentLevel.rows = _gridRows;
             _currentLevel.columns = _gridColumns;
             _currentLevel.movesAllowed = _movesAllowed;
+            _currentLevel.movesForMaxStars = _movesForMaxStars;
+            _currentLevel.movesForMidStars = _movesForMidStars;
+            _currentLevel.movesForMinStars = _movesForMinStars;
         }
     }
 }

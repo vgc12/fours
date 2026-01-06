@@ -130,13 +130,13 @@ namespace Board
                 Logger.Log("Clicked on dot");
                 
                 // Check if this is a NEW group selection (not clicking the same dot again)
-                var isNewGroupSelection = SelectedDot == null || 
-                                          (clickedDot != SelectedDot && clickedDot.SquareGroup != SelectedDot.SquareGroup);
+                var isNewGroupSelection = SelectedDot == null || (clickedDot != SelectedDot
+                                                               && clickedDot.SquareGroup != SelectedDot.SquareGroup);
                 
                 var selectCommand = new SelectDotCommand(this, clickedDot);
                 await _commandManager.ExecuteCommand(selectCommand);
                 var currentGridSnapshot = GetGridStateSnapshot();
-                // If a new group was just selected, take a snapshot and decrement moves
+ 
                 if (isNewGroupSelection && SelectedDot != null && PreviouslySelectedDot != null && _gridBeforeMoveSnapshot != currentGridSnapshot)
                 {
                     _gridBeforeMoveSnapshot = GetGridStateSnapshot();

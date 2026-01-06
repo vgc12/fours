@@ -20,7 +20,7 @@ namespace Singletons
                 {
                     instance = FindAnyObjectByType<T>() ?? null;
                 }
-                catch (Exception e)
+                catch (Exception )
                 {
                     // ignored
                 }
@@ -32,7 +32,7 @@ namespace Singletons
                     var go = new GameObject(typeof(T).Name + " Auto-Generated");
                     instance = go.AddComponent<T>();
                 }
-                catch (Exception _)
+                catch (Exception)
                 {
                     // ignored
                 }

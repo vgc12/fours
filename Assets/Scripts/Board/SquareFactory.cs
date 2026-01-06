@@ -22,8 +22,9 @@ namespace Board
             square.SpriteRenderer.sprite = squareConfig.squareSprite;
 
             // Create outline
+            var color = Color.HSVToRGB( 34/360f, 41/100f, 66/100f);
             square.OutlineRenderer = CreateChildRenderer("Outline", squareObject.transform,
-                squareConfig.squareSprite, Color.black, new Vector3(1.1f, 1.1f, 1f), 1f);
+                squareConfig.squareSprite,color , new Vector3(1.1f, 1.1f, 1f), 1f);
 
             // Create highlight
             square.HighlightRenderer = CreateChildRenderer("Highlight", squareObject.transform,

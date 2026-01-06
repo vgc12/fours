@@ -9,11 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3472cb6a1623d8849943aa906968798a, type: 3}
-  m_Name: Dot Config
+  m_Script: {fileID: 11500000, guid: 92e39a9a69ba493a8d4fc2a2c0ace0a6, type: 3}
+  m_Name: ColorPalette
   m_EditorClassIdentifier: 
-  sprite: {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
-  growScale: {x: 1.2, y: 1.2, z: 1.2}
-  growDuration: 0.3
-  shrinkDuration: 0.3
-  sortOrder: 1
+  colors:
+  - {r: 0.5372549, g: 0.6509804, b: 0.4901961, a: 1}

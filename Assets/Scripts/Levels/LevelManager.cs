@@ -45,6 +45,8 @@ namespace Levels
             playableGrid.LoadIntoGrid(initialSquares);
             targetGrid.LoadIntoGrid(targetSquares);
 
+            playableGrid.config.columnsPerRow = level.columns;
+            targetGrid.config.columnsPerRow = level.columns;
             playableGrid.Initialize();
             targetGrid.Initialize();
 

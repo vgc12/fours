@@ -40,6 +40,7 @@ namespace Levels
         
         public int rows = 4;
         public int columns = 4;
+        
         public int movesAllowed = 10;
         public int movesForMaxStars = 5;
         public int movesForMidStars = 7;

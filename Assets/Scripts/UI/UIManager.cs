@@ -1,13 +1,10 @@
-﻿using System.Linq;
-using Attributes;
-using DependencyInjection;
+﻿using Attributes;
 using EventBus;
 using Levels;
 using Singletons;
 using StateMachine;
 using UI.States;
 using UnityEngine;
-using UnityEngine.UI;
 
 
 namespace UI
@@ -28,7 +25,9 @@ namespace UI
         private IState _inGameState;
         private IState _levelCompleteState;
         private IState _levelFailedState;
+        
 
+        
 
         private EventBinding<LevelCompletedEvent> _levelCompletedBinding;
 
@@ -92,43 +91,5 @@ namespace UI
             levelManager.LoadLevel(levelManager.CurrentLevel);
             SwitchToInGame();
         }
-    }
-
-    public sealed class LevelCompleteState : UIBaseState
-    {
-        private readonly ILevelManager _levelManager;
-        private readonly Button _nextLevelButton;
-        private readonly Button _mainMenuButton;
-
-        public LevelCompleteState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager)
-        {
-            RuntimeResolver.Instance.TryResolve(out _levelManager);
-            var buttons = RootPageElement.GetComponentsInChildren<Button>();
-            _nextLevelButton = buttons.First(b => b.name == "next-level-button");
-            _mainMenuButton = buttons.First(b => b.name == "main-menu-button");
-
-
-            if (_levelManager.NextLevel == _levelManager.CurrentLevel)
-            {
-                _nextLevelButton.gameObject.SetActive(false);
-            }
-
-            _nextLevelButton.onClick.AddListener(() =>
-            {
-                var nextLevel = _levelManager.NextLevel;
-                if (nextLevel == null)
-                {
-                    return;
-                }
-
-                _levelManager.LoadLevel(nextLevel);
-                UIManager.SwitchToInGame();
-            });
-        }
-    }
-
-    public sealed class LevelFailedState : UIBaseState
-    {
-        public LevelFailedState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager) { }
     }
 }

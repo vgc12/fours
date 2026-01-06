@@ -22,7 +22,7 @@ namespace Board
         public Square BottomLeft;
         public Square BottomRight;
         public Dot AttachedDot;
-        public Transform OriginalParent;
+        public readonly Transform OriginalParent;
         public bool Selected => Squares.Any(s => s.HighlightRenderer.enabled);
         
         public IReadOnlyList<Square> Squares => new[]
@@ -79,7 +79,7 @@ namespace Board
             var scale = new Vector3(1.2f, 1.2f, 1.0f);
             const float scaleSpeed = .23f;
             const Ease scaleEase = Ease.InOutCubic;
-            const float rotationSpeed = .55f;
+            const float rotationSpeed = .38f;
             await Sequence
                  .Create()
                  .Chain(Tween.Scale(AttachedDot.transform, new TweenSettings<Vector3>(scale, duration: scaleSpeed, ease: scaleEase)))
@@ -107,7 +107,7 @@ namespace Board
                 square.HighlightRenderer.sortingOrder += order;
                 square.OutlineRenderer.sortingOrder += order;
             }
-            
+            AttachedDot.GetComponent<SpriteRenderer>().sortingOrder += order;
         }
 
         public void SetGroupParents(Transform parent, bool worldPositionStays = true)
@@ -126,11 +126,10 @@ namespace Board
                 TopRight.Select(),
                 BottomLeft.Select(),
                 BottomRight.Select(),
-                AttachedDot.Grow()
             };
             await UniTask.WhenAll(tasks);
-            
             SetGroupParents(AttachedDot.transform);
+            
             
             
         }
@@ -142,11 +141,11 @@ namespace Board
                 TopLeft.Deselect(),
                 TopRight.Deselect(),
                 BottomLeft.Deselect(),
-                BottomRight.Deselect()
+                BottomRight.Deselect(),
             };
             await UniTask.WhenAll(tasks);
-            
             SetGroupParents(OriginalParent);
+            
            
       
         }

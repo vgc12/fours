@@ -30,6 +30,18 @@ namespace UI.States
             EventBus<LevelLoadedEvent>.Register(_levelSelectStateBinding);
         }
 
+        public override void Enter()
+        {
+            base.Enter();
+            EventBus<UIEvent>.Raise(new UIEvent(UIEvent.UIEventType.InGame));
+        }
+
+        public override void Exit()
+        {
+            base.Exit();
+            EventBus<UIEvent>.Raise(new UIEvent(UIEvent.UIEventType.InMenu));
+        }
+
         private void OnLevelLoaded(LevelLoadedEvent obj)
         {
             _movesLabel.text = $"Moves Remaining: {obj.LevelData.movesAllowed}";

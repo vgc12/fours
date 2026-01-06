@@ -13,6 +13,8 @@ namespace Player.Input
         
         event UnityAction LeftClick;
         event UnityAction RightClick;
+
+        event UnityAction UIClick;
         
         public PlayerInputActions PlayerInputActions { get; }
     }

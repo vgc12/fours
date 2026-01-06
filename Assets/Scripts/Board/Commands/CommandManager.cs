@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 namespace Board.Commands
@@ -26,7 +27,7 @@ namespace Board.Commands
             _redoStack = new Stack<ICommand>();
         }
 
-        public async Task<bool> ExecuteCommand(ICommand command)
+        public async UniTask<bool> ExecuteCommand(ICommand command)
         {
             if (command == null) return false;
 
@@ -60,7 +61,7 @@ namespace Board.Commands
             return success;
         }
 
-        public async Task<bool> UndoLastCommand()
+        public async UniTask<bool> UndoLastCommand()
         {
             if (!CanUndo) return false;
 
@@ -88,7 +89,7 @@ namespace Board.Commands
             return success;
         }
 
-        public async Task<bool> RedoLastCommand()
+        public async UniTask<bool> RedoLastCommand()
         {
             if (!CanRedo) return false;
 

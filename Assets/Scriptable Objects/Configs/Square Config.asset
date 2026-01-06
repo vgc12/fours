@@ -16,7 +16,7 @@ MonoBehaviour:
   selectTween:
     startFromCurrent: 1
     startValue: {r: 0, g: 0, b: 0, a: 0}
-    endValue: {r: 1, g: 1, b: 1, a: 0.5}
+    endValue: {r: 0, g: 0, b: 0, a: 0.34509805}
     settings:
       duration: 0.1
       ease: 10
@@ -36,7 +36,7 @@ MonoBehaviour:
   deselectTween:
     startFromCurrent: 1
     startValue: {r: 0, g: 0, b: 0, a: 0}
-    endValue: {r: 1, g: 1, b: 1, a: 0}
+    endValue: {r: 0, g: 0, b: 0, a: 0}
     settings:
       duration: 0.1
       ease: 10
