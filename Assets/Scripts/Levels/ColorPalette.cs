@@ -7,7 +7,7 @@ namespace Levels
     [CreateAssetMenu(menuName = "Create Color Palette", fileName = "Color Palette", order = 0)]
     public sealed class ColorPalette : ScriptableObject
     {
-        public List<Color> colors = new List<Color>();
+        public List<Color> colors = new();
     }
 }
 #endif

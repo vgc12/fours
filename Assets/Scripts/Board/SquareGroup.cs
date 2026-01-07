@@ -128,7 +128,7 @@ namespace Board
                 BottomRight.Select(),
             };
             await UniTask.WhenAll(tasks);
-            SetGroupParents(AttachedDot.transform);
+         
             
             
             
@@ -136,7 +136,7 @@ namespace Board
         
         public async UniTask Deselect()
         {
-            SetGroupParents(OriginalParent);
+ 
             var tasks = new[]
             {
                 TopLeft.Deselect(),

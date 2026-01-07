@@ -7,7 +7,6 @@ namespace Board
     [CreateAssetMenu(fileName = "Square Factory", menuName = "Factories/Square Factory", order = 0)]
     public sealed class SquareFactory : ScriptableObject, IFactory<Square, SquareCreationParams>
     {
-            
         [Required, SerializeField] public SquareConfig squareConfig;
 
         public Square Create(SquareCreationParams parameters)
@@ -17,22 +16,25 @@ namespace Board
             squareObject.transform.SetParent(parameters.Parent, false);
 
             var square = squareObject.GetOrAdd<Square>();
-           
+
             square.SpriteRenderer = square.GetOrAdd<SpriteRenderer>();
             square.SpriteRenderer.sprite = squareConfig.squareSprite;
-
-            // Create outline
-            var color = Color.HSVToRGB( 34/360f, 41/100f, 66/100f);
-            square.OutlineRenderer = CreateChildRenderer("Outline", squareObject.transform,
-                squareConfig.squareSprite,color , new Vector3(1.1f, 1.1f, 1f), 1f);
-
-            // Create highlight
-            square.HighlightRenderer = CreateChildRenderer("Highlight", squareObject.transform,
-                squareConfig.squareSprite, new Color(1f, 1f, 1f, 0.5f), Vector3.one, 1f);
-            square.HighlightRenderer.enabled = false;
-
             square.squareConfig = squareConfig;
-                
+
+            if (!parameters.Inactive)
+            {
+                // Create outline
+                var color = Color.HSVToRGB(34 / 360f, 41 / 100f, 66 / 100f);
+                square.OutlineRenderer = CreateChildRenderer("Outline", squareObject.transform,
+                    squareConfig.squareSprite, color, new Vector3(1.1f, 1.1f, 1f), 1f);
+
+                // Create highlight
+                square.HighlightRenderer = CreateChildRenderer("Highlight", squareObject.transform,
+                    squareConfig.squareSprite, new Color(1f, 1f, 1f, 0.5f), Vector3.one, 1f);
+                square.HighlightRenderer.enabled = false;
+            }
+
+
             square.Initialize(parameters.Id, parameters.Color, parameters.Inactive);
 
             return square;

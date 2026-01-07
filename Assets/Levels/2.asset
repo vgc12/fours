@@ -14,10 +14,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rows: 3
   columns: 3
-  movesAllowed: 5
   movesForMaxStars: 5
   movesForMidStars: 7
   movesForMinStars: 8
+  solutionSteps:
+    steps:
+    - group: 1
+      rotationDirection: -1
+      times: 1
+    - group: 2
+      rotationDirection: -1
+      times: 1
+    - group: 1
+      rotationDirection: -1
+      times: 1
   initialSquares:
   - id:
       row: 0

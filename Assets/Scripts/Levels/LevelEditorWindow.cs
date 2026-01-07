@@ -9,6 +9,8 @@ namespace Levels
     public sealed class LevelEditorWindow : EditorWindow
     {
         private LevelData _currentLevel;
+        private SquareDataList _targetSquares;
+        private SquareDataList _initialSquares;
         private Vector2 _scrollPosition;
         private int _gridRows = 4;
         private int _gridColumns = 4;
@@ -23,23 +25,19 @@ namespace Levels
         private enum EditMode { Initial, Target, Both }
 
         private EditMode _editMode = EditMode.Initial;
+        
 
-        // Inactive square settings
-        private Color _inactiveSquareColor = new(0.2f, 0.2f, 0.2f, 0.5f);
-        private bool _showInactiveSquares = false;
-        private bool _fillEmptyWithInactive = false;
 
         // Foldout states
         private bool _showLevelSettings = true;
         private bool _showGridSettings = true;
         private bool _showEditMode = true;
-        private bool _showInactiveSettings = true;
+  
         private bool _showColorPalette = true;
 
- 
 
         private TargetGrid _targetGrid;
-        private int _movesAllowed;
+
         private int _movesForMaxStars = 5;
         private int _movesForMidStars = 7;
         private int _movesForMinStars = 8;
@@ -67,7 +65,6 @@ namespace Levels
             DrawLevelSettings();
             DrawGridSettings();
             DrawEditModeSettings();
-            DrawInactiveSquareSettings();
             DrawColorPalette();
             DrawGrids();
             DrawActions();
@@ -100,16 +97,15 @@ namespace Levels
 
             EditorGUILayout.EndHorizontal();
 
-            _movesAllowed = EditorGUILayout.IntField("Allowed Moves", _movesAllowed);
             _movesForMaxStars = EditorGUILayout.IntField("Moves for 3 Stars", _movesForMaxStars);
             _movesForMidStars = EditorGUILayout.IntField("Moves for 2 Stars", _movesForMidStars);
             _movesForMinStars = EditorGUILayout.IntField("Moves for 1 Star", _movesForMinStars);
-            
 
-            if (_currentLevel != null)
+
+            if (_currentLevel)
             {
                 var playableActive = _currentLevel.GetActiveSquares(false).Count;
-                var playableTotal = _currentLevel.initialSquares.Count;
+                var playableTotal = _initialSquares.Count;
                 var targetActive = _currentLevel.GetActiveSquares(true).Count;
                 var targetTotal = _currentLevel.targetSquares.Count;
 
@@ -137,16 +133,16 @@ namespace Levels
             EditorGUILayout.Space(3);
             _playableGrid = FindFirstObjectByType<PlayableGrid>();
             _targetGrid = FindFirstObjectByType<TargetGrid>();
-            if( _playableGrid == null || _targetGrid == null)
+            if (_playableGrid == null || _targetGrid == null)
             {
                 EditorGUILayout.HelpBox("Playable Grid and Target Grid references are required in the scene.",
                     MessageType.Warning);
             }
 
-     /*       _playableGrid =
-                (SpriteGrid)EditorGUILayout.ObjectField("Playable Grid", _playableGrid, typeof(PlayableGrid), true);
-            _targetGrid = (TargetGrid)EditorGUILayout.ObjectField("Target Grid", _targetGrid, typeof(TargetGrid), true);
-            */
+            /*       _playableGrid =
+                       (SpriteGrid)EditorGUILayout.ObjectField("Playable Grid", _playableGrid, typeof(PlayableGrid), true);
+                   _targetGrid = (TargetGrid)EditorGUILayout.ObjectField("Target Grid", _targetGrid, typeof(TargetGrid), true);
+                   */
             _squareFactory =
                 (SquareFactory)EditorGUILayout.ObjectField("Square Factory", _squareFactory, typeof(SquareFactory),
                     true);
@@ -171,22 +167,14 @@ namespace Levels
 
             // Copy buttons
             EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Copy Initial → Target", GUILayout.Height(25)))
+            if (GUILayout.Button("Copy Initial -> Target", GUILayout.Height(25)))
             {
-                if (_currentLevel != null)
-                {
-                    _currentLevel.CopyInitialToTarget();
-                    EditorUtility.SetDirty(_currentLevel);
-                }
+                _targetSquares.squares = new List<LevelData.SquareData>(_initialSquares.squares);
             }
 
-            if (GUILayout.Button("Copy Target → Initial", GUILayout.Height(25)))
+            if (GUILayout.Button("Copy Target -> Initial", GUILayout.Height(25)))
             {
-                if (_currentLevel != null)
-                {
-                    _currentLevel.CopyTargetToInitial();
-                    EditorUtility.SetDirty(_currentLevel);
-                }
+                _initialSquares.squares = new List<LevelData.SquareData>(_targetSquares.squares);
             }
 
             EditorGUILayout.EndHorizontal();
@@ -194,25 +182,7 @@ namespace Levels
             EditorGUILayout.EndVertical();
             EditorGUILayout.Space(5);
         }
-
-        private void DrawInactiveSquareSettings()
-        {
-            _showInactiveSettings = EditorGUILayout.Foldout(_showInactiveSettings, "Inactive Square Settings", true);
-            if (!_showInactiveSettings) return;
-
-            EditorGUILayout.BeginVertical("box");
-
-            _fillEmptyWithInactive = EditorGUILayout.Toggle("Fill Empty with Inactive", _fillEmptyWithInactive);
-            _showInactiveSquares = EditorGUILayout.Toggle("Show Inactive Squares", _showInactiveSquares);
-            _inactiveSquareColor = EditorGUILayout.ColorField("Inactive Color", _inactiveSquareColor);
-
-            EditorGUILayout.HelpBox(
-                "Inactive squares maintain grid structure but don't participate in gameplay.",
-                MessageType.Info);
-
-            EditorGUILayout.EndVertical();
-            EditorGUILayout.Space(5);
-        }
+        
 
         private void DrawColorPalette()
         {
@@ -221,7 +191,7 @@ namespace Levels
 
             EditorGUILayout.BeginVertical("box");
 
-            var buttonsPerRow = 4;
+            const int buttonsPerRow = 4;
             for (var i = 0; i < _colorPalette.colors.Count; i += buttonsPerRow)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -322,7 +292,7 @@ namespace Levels
                 {
                     var cellRect = GUILayoutUtility.GetRect(_cellSize, _cellSize);
 
-                    var squareData = _currentLevel.GetSquare(row, col, isTarget);
+                    var squareData =isTarget? _targetSquares.GetSquare(row, col) : _initialSquares.GetSquare(row, col);
                     Color cellColor;
 
                     if (squareData != null)
@@ -331,10 +301,6 @@ namespace Levels
                         {
                             cellColor = squareData.color;
                         }
-                        else if (_showInactiveSquares)
-                        {
-                            cellColor = _inactiveSquareColor;
-                        }
                         else
                         {
                             cellColor = new Color(0.3f, 0.3f, 0.3f);
@@ -342,7 +308,6 @@ namespace Levels
                     }
                     else
                     {
-                        // _currentLevel.AddSquare(row, col, Color.clear,  true, isTarget);
                         cellColor = new Color(0.25f, 0.25f, 0.25f);
                     }
 
@@ -408,31 +373,29 @@ namespace Levels
             EditorGUILayout.BeginHorizontal();
             if (GUILayout.Button("Clear Initial", GUILayout.Height(30)))
             {
-                if (_currentLevel && EditorUtility.DisplayDialog("Clear Initial Grid",
+                if (EditorUtility.DisplayDialog("Clear Initial Grid",
                         "Clear all squares from initial grid?", "Yes", "No"))
                 {
-                    _currentLevel.Clear(true, false);
-                    EditorUtility.SetDirty(_currentLevel);
+                    _initialSquares.Clear();
                 }
             }
 
             if (GUILayout.Button("Clear Target", GUILayout.Height(30)))
             {
-                if (_currentLevel && EditorUtility.DisplayDialog("Clear Target Grid",
+                if ( EditorUtility.DisplayDialog("Clear Target Grid",
                         "Clear all squares from target grid?", "Yes", "No"))
                 {
-                    _currentLevel.Clear(false);
-                    EditorUtility.SetDirty(_currentLevel);
+                    _targetSquares.Clear();
                 }
             }
 
             if (GUILayout.Button("Clear Both", GUILayout.Height(30)))
             {
-                if (_currentLevel && EditorUtility.DisplayDialog("Clear Both Grids",
+                if (EditorUtility.DisplayDialog("Clear Both Grids",
                         "Clear all squares from both grids?", "Yes", "No"))
                 {
-                    _currentLevel.Clear();
-                    EditorUtility.SetDirty(_currentLevel);
+                    _initialSquares.Clear();
+                    _targetSquares.Clear();
                 }
             }
 
@@ -477,7 +440,12 @@ namespace Levels
 
             _gridRows = _currentLevel.rows;
             _gridColumns = _currentLevel.columns;
-            _movesAllowed = _currentLevel.movesAllowed;
+            _initialSquares.FillWithInactive(_gridRows, _gridColumns, Color.gray);
+            _targetSquares.FillWithInactive(_gridRows, _gridColumns, Color.gray);
+            _initialSquares = _currentLevel.initialSquares;
+            _targetSquares = _currentLevel.targetSquares;
+            
+
             _movesForMinStars = _currentLevel.movesForMinStars;
             _movesForMidStars = _currentLevel.movesForMidStars;
             _movesForMaxStars = _currentLevel.movesForMaxStars;
@@ -486,38 +454,48 @@ namespace Levels
 
         private void PlaceSquare(int row, int col, bool isTarget)
         {
-            if (_currentLevel)
+          
+            if (isTarget)
             {
-                _currentLevel.AddSquare(row, col, _currentColor, false, isTarget);
-                EditorUtility.SetDirty(_currentLevel);
-                Repaint();
+                _targetSquares.AddSquare(row, col, _currentColor,  false);
             }
+            else
+            {
+                _initialSquares.AddSquare(row, col, _currentColor,  false);
+            }
+
+          
+            Repaint();
         }
 
         private void RemoveSquare(int row, int col, bool isTarget)
         {
-            if (_currentLevel)
+      
+
+            if (isTarget)
             {
-                _currentLevel.RemoveSquare(row, col, isTarget);
-                EditorUtility.SetDirty(_currentLevel);
-                Repaint();
+                _targetSquares.RemoveSquare(row, col);
+                _targetSquares.AddSquare(row, col, _currentColor, true);
             }
+            else
+            {
+                _initialSquares.RemoveSquare(row, col);
+                _initialSquares.AddSquare(row, col, _currentColor, true);
+            }
+            
+           
+            Repaint();
         }
 
         private void ApplyToScene()
         {
-            if (_fillEmptyWithInactive)
-            {
-                _currentLevel.FillWithInactiveSquares(_inactiveSquareColor, true, true);
-                EditorUtility.SetDirty(_currentLevel);
-            }
-
+          
             _playableGrid.ClearGrid();
             _targetGrid.ClearGrid();
 
             // Create squares from level data
-            var playableSquares = _currentLevel.GetAllSquares(false);
-            var targetSquares = _currentLevel.GetAllSquares(true);
+            var playableSquares = _initialSquares.squares;
+            var targetSquares = _targetSquares.squares;
 
             var targetIndex = SpawnSquaresUnderGrid(_targetGrid, targetSquares);
             var playableIndex = SpawnSquaresUnderGrid(_playableGrid, playableSquares);
@@ -525,11 +503,11 @@ namespace Levels
             SaveToLevel();
 
 
-            var activePlayableCount = _currentLevel.GetActiveSquares(false).Count;
+            var activePlayableCount = _initialSquares.Count;
             EditorUtility.DisplayDialog("Success",
                 $"Applied Playable Grid: {playableIndex} total squares ({activePlayableCount} active, {playableIndex - activePlayableCount} inactive)!",
                 "OK");
-            var activeTargetCount = _currentLevel.GetActiveSquares(true).Count;
+            var activeTargetCount = _targetSquares.Count;
             EditorUtility.DisplayDialog("Success",
                 $"Applied Target Grid: {activeTargetCount} total squares ({activeTargetCount} active, {targetIndex - activeTargetCount} inactive)!",
                 "OK");
@@ -571,11 +549,13 @@ namespace Levels
         {
             EditorUtility.SetDirty(_currentLevel);
             AssetDatabase.SaveAssets();
-            
+
 
             _currentLevel.rows = _gridRows;
             _currentLevel.columns = _gridColumns;
-            _currentLevel.movesAllowed = _movesAllowed;
+            _currentLevel.initialSquares = _initialSquares;
+            _currentLevel.targetSquares = _targetSquares;
+
             _currentLevel.movesForMaxStars = _movesForMaxStars;
             _currentLevel.movesForMidStars = _movesForMidStars;
             _currentLevel.movesForMinStars = _movesForMinStars;

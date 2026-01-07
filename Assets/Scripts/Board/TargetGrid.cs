@@ -2,7 +2,7 @@
 
 namespace Board
 {
-    public sealed class TargetGrid : SpriteGrid
+    public sealed class TargetGrid : SpriteGrid 
     {
         
         // Override to prevent gizmos on target grid if desired

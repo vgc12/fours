@@ -16,6 +16,7 @@ namespace Board
                     position = squareGroup.CenterPoint,
                 }
             };
+            
 
             var spriteRenderer = dotObject.AddComponent<SpriteRenderer>();
             spriteRenderer.enabled = false;
@@ -29,7 +30,7 @@ namespace Board
             dotObject.layer = LayerMask.NameToLayer("Dot");
 
             var col = dotObject.AddComponent<BoxCollider2D>();
-            col.size = new Vector2(.5f, .5f);
+            col.size = new Vector2(1, 1);
 
             return dot;
         }

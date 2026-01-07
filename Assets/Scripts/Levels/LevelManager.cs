@@ -55,6 +55,7 @@ namespace Levels
             var activeCount = level.GetActiveSquares(true).Count;
             _logger.Log(
                 $"Loaded {targetSquares.Count} squares ({activeCount} active, {targetSquares.Count - activeCount} inactive)");
+            _logger.Log(level.solutionSteps.ToString());
             EventBus<LevelLoadedEvent>.Raise(new LevelLoadedEvent(level));
         }
 
