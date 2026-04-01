@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Attributes;
 using Board;
+using Cysharp.Threading.Tasks;
 using EventBus;
 using Reflex.Attributes;
 using Singletons;
@@ -18,6 +19,7 @@ namespace Levels
         [Required, SerializeField] private SpriteGrid playableGrid;
         [Required, SerializeField] private SpriteGrid targetGrid;
         public LevelData CurrentLevel { get; private set; }
+        public bool LoadingInProgress { get; private set; }
 
 
         [Inject] private readonly ILogger _logger;
@@ -35,6 +37,7 @@ namespace Levels
                 Debug.LogError("Missing required references!");
                 return;
             }
+            LoadingInProgress = true;
 
             playableGrid.ClearGrid();
             targetGrid.ClearGrid();
@@ -57,8 +60,48 @@ namespace Levels
                 $"Loaded {targetSquares.Count} squares ({activeCount} active, {targetSquares.Count - activeCount} inactive)");
             _logger.Log(level.solutionSteps.ToString());
             EventBus<LevelLoadedEvent>.Raise(new LevelLoadedEvent(level));
+            LoadingInProgress = false;
         }
 
+        public async UniTask LoadLevelAsync(LevelData level)
+        {
+            if (level == null || playableGrid == null)
+            {
+                Debug.LogError("Missing required references!");
+                return;
+            }
+            LoadingInProgress = true;
+
+            playableGrid.ClearGrid();
+            targetGrid.ClearGrid();
+
+            // Do heavy work on thread pool
+            var (targetSquares, initialSquares) = await UniTask.RunOnThreadPool(() =>
+            {
+                var target = level.GetAllSquares(true);
+                var initial = level.GetAllSquares(false);
+                return (target, initial);
+            });
+
+            // Back on main thread for Unity calls
+            playableGrid.LoadIntoGrid(initialSquares);
+            targetGrid.LoadIntoGrid(targetSquares);
+
+            playableGrid.config.columnsPerRow = level.columns;
+            targetGrid.config.columnsPerRow = level.columns;
+    
+            playableGrid.Initialize();
+            targetGrid.Initialize();
+
+            CurrentLevel = level;
+
+            var activeCount = level.GetActiveSquares(true).Count;
+            _logger.Log($"Loaded {targetSquares.Count} squares ({activeCount} active, {targetSquares.Count - activeCount} inactive)");
+            _logger.Log(level.solutionSteps.ToString());
+    
+            EventBus<LevelLoadedEvent>.Raise(new LevelLoadedEvent(level));
+            LoadingInProgress = false;
+        }
 
         private EventBinding<GroupRotatedEvent> _groupRotatedBinding;
 

@@ -21,16 +21,17 @@ namespace Board
             square.SpriteRenderer.sprite = squareConfig.squareSprite;
             square.squareConfig = squareConfig;
 
+         
             if (!parameters.Inactive)
             {
                 // Create outline
-                var color = Color.HSVToRGB(34 / 360f, 41 / 100f, 66 / 100f);
+                
                 square.OutlineRenderer = CreateChildRenderer("Outline", squareObject.transform,
-                    squareConfig.squareSprite, color, new Vector3(1.1f, 1.1f, 1f), 1f);
+                    squareConfig.squareSprite, squareConfig.spriteColor, new Vector3(1.1f, 1.1f, 1f), 1f);
 
                 // Create highlight
                 square.HighlightRenderer = CreateChildRenderer("Highlight", squareObject.transform,
-                    squareConfig.squareSprite, new Color(1f, 1f, 1f, 0.5f), Vector3.one, 1f);
+                    squareConfig.squareSprite, squareConfig.highlightColor, Vector3.one, 1f);
                 square.HighlightRenderer.enabled = false;
             }
 

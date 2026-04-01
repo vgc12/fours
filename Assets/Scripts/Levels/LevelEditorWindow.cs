@@ -58,6 +58,8 @@ namespace Levels
             _colorPalette = Resources.Load<ColorPalette>("ColorPalette");
             _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition);
 
+            _initialSquares ??= new SquareDataList();
+            _targetSquares ??= new SquareDataList();
             EditorGUILayout.Space(5);
             EditorGUILayout.LabelField("Level Editor", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);

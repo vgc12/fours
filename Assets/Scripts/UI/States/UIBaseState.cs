@@ -1,4 +1,5 @@
-﻿using StateMachine;
+﻿using PrimeTween;
+using StateMachine;
 using UnityEngine;
 using Cursor = UnityEngine.Cursor;
 
@@ -6,7 +7,7 @@ namespace UI.States
 {
     public abstract class UIBaseState : BaseState
     {
-        protected readonly GameObject RootPageElement;
+        public readonly GameObject RootPageElement;
  
         protected readonly UIManager UIManager;
 
@@ -29,6 +30,7 @@ namespace UI.States
             IsActive = true;
             RootPageElement.SetActive(true);
             ChangeMouseState();
+           
             
         }
 

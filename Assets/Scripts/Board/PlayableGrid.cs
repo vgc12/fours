@@ -45,7 +45,7 @@ namespace Board
             base.Start();
             InitializeCommandSystem();
             InitializeInput();
-            _gridBeforeMoveSnapshot = GetGridStateSnapshot();
+            _gridBeforeMoveSnapshot = CurrentGridStateSnapshot;
             
             _levelLoadedEvent = new EventBinding<LevelLoadedEvent>(OnLevelLoaded);
             EventBus<LevelLoadedEvent>.Register(_levelLoadedEvent);
@@ -150,7 +150,7 @@ namespace Board
                 }
             }
     
-            EventBus<GroupRotatedEvent>.Raise(new GroupRotatedEvent( SelectedDot,GetGridStateSnapshot()));
+            EventBus<GroupRotatedEvent>.Raise(new GroupRotatedEvent( SelectedDot, CurrentGridStateSnapshot));
         }
 
         private void CompleteRotation()

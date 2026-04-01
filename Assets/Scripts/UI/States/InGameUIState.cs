@@ -1,17 +1,38 @@
-﻿using EventBus;
+﻿using DependencyInjection;
+using EventBus;
+using Levels;
+using PrimeTween;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 
 namespace UI.States
 {
     public sealed class InGameUIState : UIBaseState
     {
-        public InGameUIState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager) { }
+        public readonly GameObject GridParent;
+        private readonly TMP_Text _levelText;
+        private readonly ILevelManager _levelManager;
+        public InGameUIState(GameObject gridsObject, GameObject rootElement, UIManager uiManager) : base(rootElement,
+            uiManager)
+        {
+            GridParent = gridsObject;
+            Background = GridParent.GetComponentInChildren<Image>();
+            BackgroundCanvas = GridParent.GetComponentInChildren<Canvas>();        
+            _levelText = rootElement.GetComponentInChildren<TMP_Text>();
+            RuntimeResolver.Instance.TryResolve(out _levelManager);
+        }
+
+        public Image Background { get;  private set; }
+        public Canvas BackgroundCanvas {get; private set;}
+    
 
         public override void Enter()
         {
             base.Enter();
             EventBus<UIEvent>.Raise(new UIEvent(UIEvent.UIEventType.InGame));
+            _levelText.text = $"Level {_levelManager.CurrentLevel.name}";
         }
 
         public override void Exit()

@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4cefcb8bf8a8428eb9a311c39b2249ff, type: 3}
   m_Name: Square Config
   m_EditorClassIdentifier: 
-  squareSprite: {fileID: 7482667652216324306, guid: 24d2c2bf90ce828488e7d078fd9d7a56, type: 3}
+  squareSprite: {fileID: 21300000, guid: 24d2c2bf90ce828488e7d078fd9d7a56, type: 3}
+  spriteColor: {r: 0.66, g: 0.54274005, b: 0.3894, a: 1}
+  highlightColor: {r: 1, g: 1, b: 1, a: 0.5}
   selectTween:
     startFromCurrent: 1
     startValue: {r: 0, g: 0, b: 0, a: 0}

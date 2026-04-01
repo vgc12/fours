@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using DependencyInjection;
 using UnityEngine;
+using ILogger = Logging.ILogger;
 
 namespace Board.Commands
 {
@@ -16,6 +18,8 @@ namespace Board.Commands
         public bool CanRedo => _redoStack.Count > 0;
         public int UndoStackCount => _undoStack.Count;
 
+        private readonly ILogger _logger;
+        
         public event Action<ICommand> OnCommandExecuted;
         public event Action<ICommand> OnCommandUndone;
         public event Action<ICommand> OnCommandRedone;
@@ -25,6 +29,7 @@ namespace Board.Commands
             _maxUndoHistory = maxUndoHistory;
             _undoStack = new Stack<ICommand>();
             _redoStack = new Stack<ICommand>();
+            RuntimeResolver.Instance.TryResolve(out _logger);
         }
 
         public async UniTask<bool> ExecuteCommand(ICommand command)
@@ -51,11 +56,11 @@ namespace Board.Commands
                 }
                 
                 OnCommandExecuted?.Invoke(command);
-                Debug.Log($"Executed command: {command.Description}");
+
             }
             else
             {
-                Debug.LogError($"Failed to execute command: {command.Description}");
+                _logger.LogError($"Failed to execute command: {command.Description}");
             }
 
             return success;
@@ -68,7 +73,7 @@ namespace Board.Commands
             var command = _undoStack.Pop();
             if (!command.CanUndo)
             {
-                Debug.LogWarning($"Command cannot be undone: {command.Description}");
+                _logger.LogWarning($"Command cannot be undone: {command.Description}");
                 return false;
             }
 
@@ -77,13 +82,13 @@ namespace Board.Commands
             {
                 _redoStack.Push(command);
                 OnCommandUndone?.Invoke(command);
-                Debug.Log($"Undone command: {command.Description}");
+                _logger.Log($"Undone command: {command.Description}");
             }
             else
             {
                 // If undo failed, put the command back
                 _undoStack.Push(command);
-                Debug.LogError($"Failed to undo command: {command.Description}");
+                _logger.LogError($"Failed to undo command: {command.Description}");
             }
 
             return success;
@@ -100,13 +105,13 @@ namespace Board.Commands
             {
                 _undoStack.Push(command);
                 OnCommandRedone?.Invoke(command);
-                Debug.Log($"Redone command: {command.Description}");
+                _logger.Log($"Redone command: {command.Description}");
             }
             else
             {
                 // If redo failed, put the command back
                 _redoStack.Push(command);
-                Debug.LogError($"Failed to redo command: {command.Description}");
+                _logger.LogError($"Failed to redo command: {command.Description}");
             }
 
             return success;
@@ -116,7 +121,7 @@ namespace Board.Commands
         {
             _undoStack.Clear();
             _redoStack.Clear();
-            Debug.Log("Command history cleared");
+            _logger.Log("Command history cleared");
         }
 
         public List<string> GetUndoHistory(int count = 10)

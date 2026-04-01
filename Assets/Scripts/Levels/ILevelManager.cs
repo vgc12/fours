@@ -1,9 +1,12 @@
 ﻿using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 namespace Levels
 {
     public interface ILevelManager
     {
+        public bool LoadingInProgress { get; }
+        
         public LevelData CurrentLevel { get; }
         public List<LevelData> Levels { get; }
         
@@ -15,5 +18,7 @@ namespace Levels
         bool HasPreviousLevel { get; }
         
         void LoadLevel(LevelData level);
+        
+        UniTask LoadLevelAsync(LevelData level);
     }
 }

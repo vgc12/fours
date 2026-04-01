@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 namespace StateMachine
 {
     public class StateMachine
     {
+        public event UnityAction<IState, IState> StateChanged;
         private StateNode _currentState;
         
         private Dictionary<Type, StateNode> _nodes = new();
@@ -26,6 +28,7 @@ namespace StateMachine
                 return;
             var previousState = _currentState.State;
             var nextState = _nodes[to.GetType()].State;
+            StateChanged?.Invoke(previousState, nextState);
             previousState?.Exit();
             nextState?.Enter();
             _currentState = _nodes[to.GetType()];
@@ -37,8 +40,6 @@ namespace StateMachine
             {
                 if (transition.Predicate.Evaluate())
                     return transition;
-                
-                
             }
 
             foreach (var transition in _currentState.Transitions)
