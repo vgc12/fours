@@ -133,8 +133,8 @@ namespace Levels
             _cellSize = EditorGUILayout.Slider("Cell Size", _cellSize, 25f, 60f);
 
             EditorGUILayout.Space(3);
-            _playableGrid = FindFirstObjectByType<PlayableGrid>();
-            _targetGrid = FindFirstObjectByType<TargetGrid>();
+            _playableGrid = FindAnyObjectByType<PlayableGrid>();
+            _targetGrid = FindAnyObjectByType<TargetGrid>();
             if (_playableGrid == null || _targetGrid == null)
             {
                 EditorGUILayout.HelpBox("Playable Grid and Target Grid references are required in the scene.",

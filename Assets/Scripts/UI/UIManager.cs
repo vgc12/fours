@@ -220,8 +220,8 @@ namespace UI
         public void SwitchToPaused()
         {
             if (_states.InGame is not InGameUIState inGameState) return;
-            TransitionToState(_states.Paused, 
-                CreateGridExitTween(_states.Paused.RootPageElement.transform),
+            TransitionToState(_states.Paused,
+                CreateGridExitTween(inGameState.GridParent.transform),
                 CreateBackgroundExitTween(inGameState));
         }
 
