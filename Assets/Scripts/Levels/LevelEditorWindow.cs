@@ -22,17 +22,21 @@ namespace Levels
         private bool _isErasing;
 
         // Grid editing mode
-        private enum EditMode { Initial, Target, Both }
+        private enum EditMode { Initial, Target, Both, Rotate }
 
         private EditMode _editMode = EditMode.Initial;
-        
 
+
+        // Rotation tracking
+        private List<Solution.SolutionData> _rotationHistory = new();
+        private bool _showRotationTools = true;
+        private int _scrambleMoves = 10;
 
         // Foldout states
         private bool _showLevelSettings = true;
         private bool _showGridSettings = true;
         private bool _showEditMode = true;
-  
+
         private bool _showColorPalette = true;
 
 
@@ -67,7 +71,10 @@ namespace Levels
             DrawLevelSettings();
             DrawGridSettings();
             DrawEditModeSettings();
-            DrawColorPalette();
+            if (_editMode == EditMode.Rotate)
+                DrawRotationTools();
+            else
+                DrawColorPalette();
             DrawGrids();
             DrawActions();
 
@@ -164,7 +171,8 @@ namespace Levels
             EditorGUILayout.HelpBox(
                 "Initial: Starting grid state\n" +
                 "Target: Goal grid state\n" +
-                "Both: Edit both grids simultaneously",
+                "Both: Edit both grids simultaneously\n" +
+                "Rotate: Click 2x2 groups to rotate (LClick=CW, RClick=CCW)",
                 MessageType.Info);
 
             // Copy buttons
@@ -250,24 +258,32 @@ namespace Levels
 
             EditorGUILayout.BeginVertical("box");
             EditorGUILayout.LabelField("Grid Canvas", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox("Left Click: Place | Right Click: Erase | Drag to paint", MessageType.Info);
 
-            // Draw grids based on edit mode
-            if (_editMode == EditMode.Both)
+            if (_editMode == EditMode.Rotate)
             {
-                EditorGUILayout.BeginHorizontal();
-                DrawSingleGrid(false, "Initial Grid");
-                GUILayout.Space(10);
-                DrawSingleGrid(true, "Target Grid");
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.HelpBox("Left Click: Rotate CW | Right Click: Rotate CCW", MessageType.Info);
+                DrawRotatableGrid();
             }
-            else if (_editMode == EditMode.Initial)
+            else
             {
-                DrawSingleGrid(false, "Initial Grid (Starting State)");
-            }
-            else // Target
-            {
-                DrawSingleGrid(true, "Target Grid (Goal State)");
+                EditorGUILayout.HelpBox("Left Click: Place | Right Click: Erase | Drag to paint", MessageType.Info);
+
+                if (_editMode == EditMode.Both)
+                {
+                    EditorGUILayout.BeginHorizontal();
+                    DrawSingleGrid(false, "Initial Grid");
+                    GUILayout.Space(10);
+                    DrawSingleGrid(true, "Target Grid");
+                    EditorGUILayout.EndHorizontal();
+                }
+                else if (_editMode == EditMode.Initial)
+                {
+                    DrawSingleGrid(false, "Initial Grid (Starting State)");
+                }
+                else
+                {
+                    DrawSingleGrid(true, "Target Grid (Goal State)");
+                }
             }
 
             EditorGUILayout.EndVertical();
@@ -415,6 +431,312 @@ namespace Levels
 
 
             EditorGUILayout.EndVertical();
+        }
+
+        private void DrawRotationTools()
+        {
+            _showRotationTools = EditorGUILayout.Foldout(_showRotationTools, "Rotation Tools", true);
+            if (!_showRotationTools) return;
+
+            EditorGUILayout.BeginVertical("box");
+
+            // Scramble section
+            EditorGUILayout.LabelField("Auto-Scramble", EditorStyles.boldLabel);
+            _scrambleMoves = EditorGUILayout.IntSlider("Scramble Moves", _scrambleMoves, 1, 50);
+
+            if (GUILayout.Button("Scramble Initial from Target", GUILayout.Height(25)))
+            {
+                ScrambleInitialFromTarget();
+            }
+
+            EditorGUILayout.Space(5);
+
+            // History section
+            EditorGUILayout.LabelField($"Rotation History: {_rotationHistory.Count} moves", EditorStyles.miniLabel);
+
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Undo Last Rotation", GUILayout.Height(25)) && _rotationHistory.Count > 0)
+            {
+                UndoLastRotation();
+            }
+
+            if (GUILayout.Button("Clear History", GUILayout.Height(25)))
+            {
+                _rotationHistory.Clear();
+            }
+
+            EditorGUILayout.EndHorizontal();
+
+            if (GUILayout.Button("Save History as Solution", GUILayout.Height(25)) && _rotationHistory.Count > 0)
+            {
+                SaveRotationHistoryAsSolution();
+            }
+
+            EditorGUILayout.EndVertical();
+            EditorGUILayout.Space(5);
+        }
+
+        private void DrawRotatableGrid()
+        {
+            EditorGUILayout.BeginVertical();
+
+            var labelStyle = new GUIStyle(EditorStyles.boldLabel);
+            labelStyle.alignment = TextAnchor.MiddleCenter;
+            EditorGUILayout.LabelField("Initial Grid (Rotate Mode)", labelStyle);
+            EditorGUILayout.Space(3);
+
+            var e = Event.current;
+
+            for (var row = 0; row < _gridRows; row++)
+            {
+                EditorGUILayout.BeginHorizontal();
+
+                for (var col = 0; col < _gridColumns; col++)
+                {
+                    var cellRect = GUILayoutUtility.GetRect(_cellSize, _cellSize);
+
+                    var squareData = _initialSquares.GetSquare(row, col);
+                    Color cellColor;
+
+                    if (squareData != null)
+                        cellColor = squareData.inactive ? new Color(0.3f, 0.3f, 0.3f) : squareData.color;
+                    else
+                        cellColor = new Color(0.25f, 0.25f, 0.25f);
+
+                    EditorGUI.DrawRect(cellRect, cellColor);
+
+                    // Highlight valid 2x2 group top-left corners
+                    if (IsValidGroupTopLeft(row, col, _initialSquares))
+                    {
+                        // Draw a small indicator at the center of the 2x2 group
+                        var dotRect = new Rect(
+                            cellRect.xMax - 4,
+                            cellRect.yMax - 4,
+                            8, 8);
+                        EditorGUI.DrawRect(dotRect, new Color(1f, 1f, 1f, 0.6f));
+                    }
+
+                    // Draw border
+                    Handles.color = new Color(0.15f, 0.15f, 0.15f);
+                    Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMin),
+                        new Vector3(cellRect.xMax, cellRect.yMin));
+                    Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMin),
+                        new Vector3(cellRect.xMin, cellRect.yMax));
+                    Handles.DrawLine(new Vector3(cellRect.xMax, cellRect.yMin),
+                        new Vector3(cellRect.xMax, cellRect.yMax));
+                    Handles.DrawLine(new Vector3(cellRect.xMin, cellRect.yMax),
+                        new Vector3(cellRect.xMax, cellRect.yMax));
+
+                    // Handle rotation clicks
+                    if (!cellRect.Contains(e.mousePosition)) continue;
+                    if (e.type != EventType.MouseDown) continue;
+
+                    // Find the nearest valid 2x2 group top-left for this cell
+                    var groupTopLeft = FindNearestGroupTopLeft(row, col);
+                    if (groupTopLeft.x < 0) continue;
+
+                    if (e.button == 0) // Left click = clockwise
+                    {
+                        RotateGroup(_initialSquares, groupTopLeft.x, groupTopLeft.y, RotationDirection.Clockwise);
+                        RecordRotation(groupTopLeft.x, groupTopLeft.y, RotationDirection.Clockwise);
+                        e.Use();
+                    }
+                    else if (e.button == 1) // Right click = counter-clockwise
+                    {
+                        RotateGroup(_initialSquares, groupTopLeft.x, groupTopLeft.y, RotationDirection.CounterClockwise);
+                        RecordRotation(groupTopLeft.x, groupTopLeft.y, RotationDirection.CounterClockwise);
+                        e.Use();
+                    }
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            EditorGUILayout.EndVertical();
+        }
+
+        private bool IsValidGroupTopLeft(int row, int col, SquareDataList list)
+        {
+            if (row + 1 >= _gridRows || col + 1 >= _gridColumns) return false;
+
+            var tl = list.GetSquare(row, col);
+            var tr = list.GetSquare(row, col + 1);
+            var bl = list.GetSquare(row + 1, col);
+            var br = list.GetSquare(row + 1, col + 1);
+
+            return tl != null && !tl.inactive
+                && tr != null && !tr.inactive
+                && bl != null && !bl.inactive
+                && br != null && !br.inactive;
+        }
+
+        private Vector2Int FindNearestGroupTopLeft(int row, int col)
+        {
+            // Check all possible 2x2 groups this cell could be part of
+            // Priority: the group where this cell is top-left, then top-right, bottom-left, bottom-right
+            if (IsValidGroupTopLeft(row, col, _initialSquares)) return new Vector2Int(row, col);
+            if (col > 0 && IsValidGroupTopLeft(row, col - 1, _initialSquares)) return new Vector2Int(row, col - 1);
+            if (row > 0 && IsValidGroupTopLeft(row - 1, col, _initialSquares)) return new Vector2Int(row - 1, col);
+            if (row > 0 && col > 0 && IsValidGroupTopLeft(row - 1, col - 1, _initialSquares)) return new Vector2Int(row - 1, col - 1);
+
+            return new Vector2Int(-1, -1); // No valid group
+        }
+
+        private void RotateGroup(SquareDataList list, int topLeftRow, int topLeftCol, RotationDirection direction)
+        {
+            var tl = list.GetSquare(topLeftRow, topLeftCol);
+            var tr = list.GetSquare(topLeftRow, topLeftCol + 1);
+            var bl = list.GetSquare(topLeftRow + 1, topLeftCol);
+            var br = list.GetSquare(topLeftRow + 1, topLeftCol + 1);
+
+            if (tl == null || tr == null || bl == null || br == null) return;
+
+            if (direction == RotationDirection.Clockwise)
+            {
+                // CW: TL←BL, TR←TL, BR←TR, BL←BR
+                (tl.color, tr.color, br.color, bl.color) = (bl.color, tl.color, tr.color, br.color);
+            }
+            else
+            {
+                // CCW: TL←TR, TR←BR, BR←BL, BL←TL
+                (tl.color, tr.color, br.color, bl.color) = (tr.color, br.color, bl.color, tl.color);
+            }
+
+            Repaint();
+        }
+
+        private void RecordRotation(int topLeftRow, int topLeftCol, RotationDirection direction)
+        {
+            var group = GetGroupEnumFromPosition(topLeftRow, topLeftCol);
+            _rotationHistory.Add(new Solution.SolutionData
+            {
+                group = group,
+                rotationDirection = direction,
+                times = 1
+            });
+        }
+
+        private Solution.Group GetGroupEnumFromPosition(int row, int col)
+        {
+            // Map grid position to Solution.Group based on relative position
+            var maxRow = _gridRows - 2; // max valid top-left row
+            var maxCol = _gridColumns - 2; // max valid top-left col
+
+            var isTop = row == 0;
+            var isBottom = row == maxRow;
+            var isLeft = col == 0;
+            var isRight = col == maxCol;
+            var isMiddleRow = row > 0 && row < maxRow;
+            var isMiddleCol = col > 0 && col < maxCol;
+
+            if (isTop && isLeft) return Solution.Group.TopLeft;
+            if (isTop && isRight) return Solution.Group.TopRight;
+            if (isBottom && isLeft) return Solution.Group.BottomLeft;
+            if (isBottom && isRight) return Solution.Group.BottomRight;
+            if (isTop && isMiddleCol) return Solution.Group.TopMiddle;
+            if (isBottom && isMiddleCol) return Solution.Group.BottomMiddle;
+            if (isMiddleRow && isLeft) return Solution.Group.LeftMiddle;
+            if (isMiddleRow && isRight) return Solution.Group.RightMiddle;
+            return Solution.Group.Center;
+        }
+
+        private void ScrambleInitialFromTarget()
+        {
+            _initialSquares.CopyFrom(_targetSquares);
+            _rotationHistory.Clear();
+
+            // Collect all valid group positions
+            var validGroups = new List<Vector2Int>();
+            for (var row = 0; row < _gridRows - 1; row++)
+            {
+                for (var col = 0; col < _gridColumns - 1; col++)
+                {
+                    if (IsValidGroupTopLeft(row, col, _initialSquares))
+                        validGroups.Add(new Vector2Int(row, col));
+                }
+            }
+
+            if (validGroups.Count == 0)
+            {
+                EditorUtility.DisplayDialog("Error", "No valid 2x2 groups found to scramble.", "OK");
+                return;
+            }
+
+            // Apply random rotations
+            for (var i = 0; i < _scrambleMoves; i++)
+            {
+                var groupIdx = Random.Range(0, validGroups.Count);
+                var pos = validGroups[groupIdx];
+                var direction = Random.Range(0, 2) == 0 ? RotationDirection.Clockwise : RotationDirection.CounterClockwise;
+
+                RotateGroup(_initialSquares, pos.x, pos.y, direction);
+                RecordRotation(pos.x, pos.y, direction);
+            }
+
+            Repaint();
+        }
+
+        private void UndoLastRotation()
+        {
+            if (_rotationHistory.Count == 0) return;
+
+            var last = _rotationHistory[_rotationHistory.Count - 1];
+            _rotationHistory.RemoveAt(_rotationHistory.Count - 1);
+
+            // Find the position from the group enum and reverse the rotation
+            var pos = GetPositionFromGroupEnum(last.group);
+            if (pos.x < 0) return;
+
+            var reverseDir = last.rotationDirection == RotationDirection.Clockwise
+                ? RotationDirection.CounterClockwise
+                : RotationDirection.Clockwise;
+
+            RotateGroup(_initialSquares, pos.x, pos.y, reverseDir);
+        }
+
+        private Vector2Int GetPositionFromGroupEnum(Solution.Group group)
+        {
+            var maxRow = _gridRows - 2;
+            var maxCol = _gridColumns - 2;
+            var midRow = maxRow / 2;
+            var midCol = maxCol / 2;
+
+            return group switch
+            {
+                Solution.Group.TopLeft => new Vector2Int(0, 0),
+                Solution.Group.TopRight => new Vector2Int(0, maxCol),
+                Solution.Group.BottomLeft => new Vector2Int(maxRow, 0),
+                Solution.Group.BottomRight => new Vector2Int(maxRow, maxCol),
+                Solution.Group.TopMiddle => new Vector2Int(0, midCol),
+                Solution.Group.BottomMiddle => new Vector2Int(maxRow, midCol),
+                Solution.Group.LeftMiddle => new Vector2Int(midRow, 0),
+                Solution.Group.RightMiddle => new Vector2Int(midRow, maxCol),
+                Solution.Group.Center => new Vector2Int(midRow, midCol),
+                _ => new Vector2Int(-1, -1)
+            };
+        }
+
+        private void SaveRotationHistoryAsSolution()
+        {
+            // The solution is the inverse of the scramble (reverse order, opposite directions)
+            var solutionSteps = new List<Solution.SolutionData>();
+            for (var i = _rotationHistory.Count - 1; i >= 0; i--)
+            {
+                var step = _rotationHistory[i];
+                solutionSteps.Add(new Solution.SolutionData
+                {
+                    group = step.group,
+                    rotationDirection = step.rotationDirection == RotationDirection.Clockwise
+                        ? RotationDirection.CounterClockwise
+                        : RotationDirection.Clockwise,
+                    times = step.times
+                });
+            }
+
+            _currentLevel.solutionSteps = new Solution { steps = solutionSteps };
+            EditorUtility.SetDirty(_currentLevel);
+            EditorUtility.DisplayDialog("Saved",
+                $"Solution saved with {solutionSteps.Count} steps.", "OK");
         }
 
         private void CreateNewLevel()

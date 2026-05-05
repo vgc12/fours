@@ -8,7 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Build & Run
 
-This is a Unity project — open it in Unity Editor 6000.4.x. There is no CLI build or test pipeline; everything runs through the Unity Editor. The level editor is at **Tools > Board > Level Editor** in the menu bar.
+This is a Unity project — open it in Unity Editor 6000.4.x. There is no CLI build or test pipeline; everything runs through the Unity Editor. The level editor is at **Tools > Board > Level Editor** in the menu bar. Code analysis via Qodana (`qodana.yaml`, QDNET profile).
+
+## Key Dependencies
+- **Reflex** (v13.0.3) — DI framework
+- **UniTask** (Cysharp) — async/await replacing coroutines
+- **PrimeTween** — animation library
+- **Unity Input System** (v1.19.0) — new Input System with Main/UI action maps
 
 ## Architecture
 
@@ -41,3 +47,6 @@ This is a Unity project — open it in Unity Editor 6000.4.x. There is no CLI bu
 - `[Required]` custom attribute marks serialized fields that must be assigned in the Inspector
 - `[ScriptableObjectDropdown]` custom attribute for ScriptableObject selection in Inspector
 - Logger aliasing: `using ILogger = Logging.ILogger;` (to avoid conflict with `UnityEngine.ILogger`)
+- All animations use **PrimeTween** (not DOTween or coroutines)
+- Prefer `[Inject]` over direct `Singleton<T>.Instance` access
+- `RuntimeResolver` provides fallback resolution (Scene → Project container) when `[Inject]` isn't available
