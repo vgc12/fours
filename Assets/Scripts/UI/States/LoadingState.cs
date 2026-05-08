@@ -37,5 +37,10 @@ namespace UI.States
             _rotationTween.Stop();
             UIManager.SwitchToInGame();
         }
+
+        public override void Exit()
+        {
+            _rotationTween.Stop();
+        }
     }
 }
