@@ -12,7 +12,9 @@ namespace UI.States
 {
     public sealed class LevelSelectState : UIBaseState
     {
-        
+
+        public override UILayer Layer => UILayer.SubMenu;
+
         private readonly ILevelManager _levelManager;
         private readonly Button _backButton;
         public LevelSelectState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager)

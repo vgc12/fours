@@ -103,16 +103,16 @@ namespace Levels
             LoadingInProgress = false;
         }
 
-        private EventBinding<GroupRotatedEvent> _groupRotatedBinding;
+        private EventBinding<GroupRotateEvent> _groupRotatedBinding;
 
 
         public LevelData NextLevel => levels[Mathf.Min(levels.IndexOf(CurrentLevel) + 1, levels.Count - 1)];
 
         public LevelData PreviousLevel => levels[Mathf.Max(levels.IndexOf(CurrentLevel) - 1, 0)];
 
-        private void CheckLevelWin(GroupRotatedEvent obj)
+        private void CheckLevelWin(GroupRotateEvent obj)
         {
-            if (targetGrid.MatchesGrid(obj.GridSnapshot))
+            if (obj.RotationState == RotationState.Stopped && targetGrid.MatchesGrid(obj.GridSnapshot))
             {
                 EventBus<LevelCompletedEvent>.Raise(new LevelCompletedEvent());
             }
@@ -122,8 +122,8 @@ namespace Levels
         {
             base.Awake();
             CurrentLevel = levels.Count > 0 ? levels[0] : null;
-            _groupRotatedBinding = new EventBinding<GroupRotatedEvent>(CheckLevelWin);
-            EventBus<GroupRotatedEvent>.Register(_groupRotatedBinding);
+            _groupRotatedBinding = new EventBinding<GroupRotateEvent>(CheckLevelWin);
+            EventBus<GroupRotateEvent>.Register(_groupRotatedBinding);
         }
     }
 

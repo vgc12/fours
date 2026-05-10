@@ -13,6 +13,8 @@ namespace UI.States
         private readonly LevelManager _levelManager;
         private float _loadingTime;
 
+        public override UILayer Layer => UILayer.Overlay;
+
         public LoadingState(GameObject rootElement, UIManager uiManager) : base(rootElement, uiManager)
         {
             RotatingElement = rootElement.transform.Find("rotating-element").GetComponent<RectTransform>();
@@ -25,8 +27,11 @@ namespace UI.States
         {
             base.Enter();
             _loadingTime = 0;
+            RotatingElement.localRotation = Quaternion.identity;
+            if (_rotationTween.isAlive) _rotationTween.Stop();
+
             _rotationTween = Tween.LocalRotation(RotatingElement,
-                new Vector3(0, 0, 180), duration: .5f, cycles: -1, ease: Ease.InOutCubic);
+                new Vector3(0, 0, 180), duration: .5f, cycles: -1,cycleMode: CycleMode.Incremental, ease: Ease.InOutCubic);
         }
 
         public override void Update()
@@ -34,13 +39,14 @@ namespace UI.States
             base.Update();
             _loadingTime += Time.deltaTime;
             if (_levelManager.LoadingInProgress || _loadingTime < 2f) return;
-            _rotationTween.Stop();
             UIManager.SwitchToInGame();
         }
 
         public override void Exit()
         {
-            _rotationTween.Stop();
+            if (_rotationTween.isAlive) _rotationTween.Stop();
+            _rotationTween = default;
+           IsActive = false;
         }
     }
 }

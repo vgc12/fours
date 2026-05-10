@@ -1,7 +1,6 @@
 ﻿using DependencyInjection;
 using EventBus;
 using Levels;
-using PrimeTween;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,6 +13,9 @@ namespace UI.States
         public readonly GameObject GridParent;
         private readonly TMP_Text _levelText;
         private readonly ILevelManager _levelManager;
+
+        public override UILayer Layer => UILayer.Gameplay;
+
         public InGameUIState(GameObject gridsObject, GameObject rootElement, UIManager uiManager) : base(rootElement,
             uiManager)
         {

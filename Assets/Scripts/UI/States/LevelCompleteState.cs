@@ -9,6 +9,8 @@ namespace UI
 {
     public sealed class LevelCompleteState : UIBaseState
     {
+        public override UILayer Layer => UILayer.Modal;
+
         private readonly ILevelManager _levelManager;
         private readonly Button _nextLevelButton;
         private readonly Button _mainMenuButton;

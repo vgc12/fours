@@ -593,12 +593,12 @@ namespace Levels
 
             if (direction == RotationDirection.Clockwise)
             {
-                // CW: TL←BL, TR←TL, BR←TR, BL←BR
+                // CW: TL<-BL, TR<-TL, BR<-TR, BL<-BR
                 (tl.color, tr.color, br.color, bl.color) = (bl.color, tl.color, tr.color, br.color);
             }
             else
             {
-                // CCW: TL←TR, TR←BR, BR←BL, BL←TL
+                // CCW: TL<-TR, TR<-BR, BR<-BL, BL<-TL
                 (tl.color, tr.color, br.color, bl.color) = (tr.color, br.color, bl.color, tl.color);
             }
 

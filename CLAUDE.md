@@ -44,9 +44,13 @@ This is a Unity project — open it in Unity Editor 6000.4.x. There is no CLI bu
 
 ## Code Conventions
 - Namespaces match folder structure (`Board`, `Levels`, `UI`, `EventBus`, `StateMachine`, etc.)
+- Never under absolutely any cirumstances use a character that cannot be typed on a standard american keyboard. especially arrows and em dashes that arent a minus sign.
 - `[Required]` custom attribute marks serialized fields that must be assigned in the Inspector
 - `[ScriptableObjectDropdown]` custom attribute for ScriptableObject selection in Inspector
 - Logger aliasing: `using ILogger = Logging.ILogger;` (to avoid conflict with `UnityEngine.ILogger`)
 - All animations use **PrimeTween** (not DOTween or coroutines)
 - Prefer `[Inject]` over direct `Singleton<T>.Instance` access
-- `RuntimeResolver` provides fallback resolution (Scene → Project container) when `[Inject]` isn't available
+- `RuntimeResolver` provides fallback resolution (Scene -> Project container) when `[Inject]` isn't available
+
+## File Encoding
+- Never add a UTF-8 BOM (Byte Order Mark) to files. Save all C# and text files as UTF-8 without BOM. When editing an existing file, preserve its current encoding and never introduce a BOM.

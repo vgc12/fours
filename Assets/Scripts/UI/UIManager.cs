@@ -1,14 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using Attributes;
+using Board;
 using Cysharp.Threading.Tasks;
 using DependencyInjection;
 using EventBus;
 using Levels;
 using PrimeTween;
+using Reflex.Attributes;
 using Singletons;
 using UI.States;
 using UnityEngine;
+using ILogger = Logging.ILogger;
 
 namespace UI
 {
@@ -38,22 +41,24 @@ namespace UI
 
         [SerializeField] private Ease transitionEase = Ease.InOutCubic;
 
+        [Inject] private readonly ILogger _logger;
+
         // State management
         private readonly StateMachine.StateMachine _stateMachine = new();
-        private readonly Dictionary<UIBaseState, int> _stateHierarchy = new();
         private UIStateCollection _states;
         private UIBaseState _currentUIState;
+        private bool _isGroupRotating;
 
         // Dependencies
         private ILevelManager _levelManager;
         private EventBinding<LevelCompletedEvent> _levelCompletedBinding;
+        private EventBinding<GroupRotateEvent> _groupRotateBinding;
 
         protected override void Awake()
         {
             base.Awake();
             InitializeDependencies();
             InitializeStates();
-            SetupStateHierarchy();
             RegisterStates();
             SetInitialState();
             SubscribeToEvents();
@@ -84,19 +89,6 @@ namespace UI
             };
         }
 
-        private void SetupStateHierarchy()
-        {
-            _stateHierarchy[_states.MainMenu] = 0;
-            _stateHierarchy[_states.LevelSelect] = 1;
-            _stateHierarchy[_states.Loading] = 2;
-            _stateHierarchy[_states.InGame] = 3;
-            _stateHierarchy[_states.Paused] = 2;
-            _stateHierarchy[_states.LevelComplete] = 4;
-            _stateHierarchy[_states.LevelFailed] = 4;
-            // if (_states.Options != null)
-            //     _stateHierarchy[_states.Options] = 1;
-        }
-
         private void RegisterStates()
         {
             foreach (var state in _states.AllStates)
@@ -116,7 +108,11 @@ namespace UI
         {
             _levelCompletedBinding = new EventBinding<LevelCompletedEvent>(OnLevelCompleted);
             EventBus<LevelCompletedEvent>.Register(_levelCompletedBinding);
+
+            _groupRotateBinding = new EventBinding<GroupRotateEvent>(OnGroupRotated);
+            EventBus<GroupRotateEvent>.Register(_groupRotateBinding);
         }
+
 
         private void UnsubscribeFromEvents() { EventBus<LevelCompletedEvent>.Deregister(_levelCompletedBinding); }
 
@@ -124,7 +120,8 @@ namespace UI
 
         #region State Machine Updates
 
-        private void Update() => _stateMachine.Update();
+        private void Update() { _stateMachine.Update(); }
+
         private void FixedUpdate() => _stateMachine.FixedUpdate();
 
         #endregion
@@ -135,13 +132,14 @@ namespace UI
         {
             if (_currentUIState == newState) return;
 
+
             var direction = DetermineSlideDirection(newState);
             PerformTransition(newState, direction, extraTweens);
         }
 
         private SlideDirection DetermineSlideDirection(UIBaseState newState)
         {
-            return _stateHierarchy[newState] > _stateHierarchy[_currentUIState]
+            return newState.Layer > _currentUIState.Layer
                 ? SlideDirection.Up
                 : SlideDirection.Down;
         }
@@ -213,13 +211,21 @@ namespace UI
 
         public void SwitchToMainMenu() => TransitionToState(_states.MainMenu);
         public void SwitchToLevelSelect() => TransitionToState(_states.LevelSelect);
-        public void SwitchToLevelComplete() => TransitionToState(_states.LevelComplete);
+
+        public void SwitchToLevelComplete()
+        {
+            if (_states.InGame is not InGameUIState inGameState || _isGroupRotating) return;
+            TransitionToState(_states.LevelComplete,
+                CreateGridTween(inGameState.GridParent.transform, inGameState.GridParent.transform.position, new Vector2(0,10)),
+                CreateBackgroundLevelCompleteTween(inGameState));
+        }
+
         public void SwitchToLevelFailed() => TransitionToState(_states.LevelFailed);
         public void SwitchToOptions() => TransitionToState(_states.Options);
 
         public void SwitchToPaused()
         {
-            if (_states.InGame is not InGameUIState inGameState) return;
+            if (_states.InGame is not InGameUIState inGameState || _isGroupRotating) return;
             TransitionToState(_states.Paused,
                 CreateGridExitTween(inGameState.GridParent.transform),
                 CreateBackgroundExitTween(inGameState));
@@ -234,6 +240,16 @@ namespace UI
                 CreateBackgroundEntryTween(inGameState));
         }
 
+
+        private Tween CreateGridTween(Transform gridParent, Vector2 startValue, Vector2 endValue)
+        {
+            return Tween.Position(
+                gridParent.transform,startValue,
+                endValue,
+                transitionDuration,
+                transitionEase);
+        }
+
         private Tween CreateGridEntryTween(Transform gridParent)
         {
             return Tween.Position(
@@ -243,9 +259,10 @@ namespace UI
                 transitionDuration,
                 transitionEase);
         }
+
         private Tween CreateGridExitTween(Transform gridParent)
         {
-           return Tween.Position(
+            return Tween.Position(
                 gridParent.transform,
                 Vector2.zero,
                 new Vector3(0, -10),
@@ -253,11 +270,18 @@ namespace UI
                 transitionEase);
         }
 
+
+        private Tween CreateBackgroundLevelCompleteTween(InGameUIState state)
+        {
+            var canvasHeight = state.BackgroundCanvas.GetComponent<RectTransform>().rect.height;
+            return SlideOut(state.Background.rectTransform, new Vector2(0, canvasHeight));
+        }
         private Tween CreateBackgroundEntryTween(InGameUIState state)
         {
             var canvasHeight = state.BackgroundCanvas.GetComponent<RectTransform>().rect.height;
             return SlideIn(state.Background.rectTransform, new Vector2(0, -canvasHeight));
         }
+
         private Tween CreateBackgroundExitTween(InGameUIState state)
         {
             var canvasHeight = state.BackgroundCanvas.GetComponent<RectTransform>().rect.height;
@@ -286,11 +310,14 @@ namespace UI
 
         private void OnLevelCompleted(LevelCompletedEvent evt) => SwitchToLevelComplete();
 
+        private void OnGroupRotated(GroupRotateEvent evt) =>
+            _isGroupRotating = evt.RotationState == RotationState.Started;
+
         #endregion
 
         #region Helper Classes
 
-        private class UIStateCollection
+        private sealed class UIStateCollection
         {
             public UIBaseState MainMenu { get; init; }
             public UIBaseState InGame { get; init; }
@@ -305,22 +332,19 @@ namespace UI
             {
                 get
                 {
-
                     yield return MainMenu;
                     yield return InGame;
-                    if (Options != null) yield return Options;
+                    if (Options != null)
+                        yield return Options; // remove this null check when there is actually an options screen
                     yield return LevelSelect;
                     yield return LevelComplete;
                     yield return LevelFailed;
                     yield return Paused;
                     yield return Loading;
-
                 }
             }
 
             #endregion
         }
-
-
     }
 }

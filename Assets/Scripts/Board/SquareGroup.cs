@@ -16,7 +16,8 @@ namespace Board
         public GridIndex TopLeftIndex;
 
 
-        public Vector2 CenterPoint;
+        public Vector2 CenterPoint => (TopLeft.transform.position + TopRight.transform.position +
+                                       BottomLeft.transform.position + BottomRight.transform.position) / 4f;
         public Square TopLeft;
         public Square TopRight;
         public Square BottomLeft;
@@ -43,8 +44,6 @@ namespace Board
             TopRight = topRight;
             BottomLeft = bottomLeft;
             BottomRight = bottomRight;
-            CenterPoint = (TopLeft.transform.position + BottomRight.transform.position + TopRight.transform.position +
-                           BottomLeft.transform.position) / 4f;
             OriginalParent = TopLeft.transform.parent;
 
             Id = Guid.NewGuid();

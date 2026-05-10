@@ -41,8 +41,4 @@ namespace Board
     }
 
 
-    internal class SquareGroupRotatedEvent : IEvent
-    {
-  
-    }
 }

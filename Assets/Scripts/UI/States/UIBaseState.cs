@@ -8,17 +8,19 @@ namespace UI.States
     public abstract class UIBaseState : BaseState
     {
         public readonly GameObject RootPageElement;
- 
+
         protected readonly UIManager UIManager;
+
+        public abstract UILayer Layer { get; }
 
         protected UIBaseState(GameObject rootElement, UIManager uiManager)
         {
             RootPageElement = rootElement;
 
             UIManager = uiManager;
-            
+
             rootElement.SetActive(false);
-            
+
         }
 
         public bool IsActive { get; protected set; }

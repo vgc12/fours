@@ -36,12 +36,12 @@ namespace Board
         
         public void ClearDots()
         {
-            _dots ??= new List<Dot>(Object.FindObjectsByType<Dot>(sortMode: FindObjectsSortMode.None));
+            _dots ??= new List<Dot>(FindObjectsByType<Dot>(sortMode: FindObjectsSortMode.None));
             foreach (var dot in _dots)
             {
                 if (dot != null && dot.gameObject != null)
                 {
-                    Object.Destroy(dot.gameObject);
+                    Destroy(dot.gameObject);
                 }
             }
         }

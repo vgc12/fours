@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Attributes;
 using Board.Commands;
@@ -9,21 +10,18 @@ using Player.Input;
 using Reflex.Attributes;
 using UI.States;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace Board
 {
-    
-    
-    
     public sealed class PlayableGrid : SpriteGrid
     {
         private GridInputHandler _inputHandler;
         [SerializeField, Required] private DotManager dotManager;
-        [Inject]
-        private IInputManager _inputManager;
-        [Inject]
-        private readonly ILevelManager _levelManager;
+        [Inject] private IInputManager _inputManager;
+        [Inject] private readonly ILevelManager _levelManager;
         private CommandManager _commandManager;
         private int _rotationsMade = 0;
         private string _gridBeforeMoveSnapshot = string.Empty;
@@ -39,23 +37,25 @@ namespace Board
         public int RotationsMade => _rotationsMade;
 
         private EventBinding<LevelLoadedEvent> _levelLoadedEvent;
-        
+
         protected override void Start()
         {
             base.Start();
             InitializeCommandSystem();
             InitializeInput();
             _gridBeforeMoveSnapshot = CurrentGridStateSnapshot;
-            
+
             _levelLoadedEvent = new EventBinding<LevelLoadedEvent>(OnLevelLoaded);
             EventBus<LevelLoadedEvent>.Register(_levelLoadedEvent);
-    
-
         }
 
         private void OnLevelLoaded(LevelLoadedEvent obj)
         {
             _rotationsMade = 0;
+            SelectedDot = null;
+            PreviouslySelectedDot = null;
+            IsRotating = false;
+            _commandManager?.ClearHistory();
         }
 
         public override void Initialize()
@@ -63,14 +63,13 @@ namespace Board
             base.Initialize();
             dotManager.CreateDots(SquareGroups);
         }
-        
+
         protected override void InitializeComponents()
         {
             base.InitializeComponents();
             _inputHandler = new GridInputHandler(Camera.main, LayerMask.GetMask("Dot"));
-       
         }
-        
+
         private void InitializeCommandSystem()
         {
             if (!enableUndo) return;
@@ -83,29 +82,23 @@ namespace Board
 
         private void InitializeInput()
         {
-            _inputManager.Tap += async () =>
-            {
-                await ExecuteSelect();
-            };
-
             _inputManager.Tap += async () => await ExecuteSelect();
-            
-            _inputManager.LeftClick += async() =>
+
+            _inputManager.LeftClick += async () =>
             {
                 await ExecuteSelect();
                 await TryRotate(RotationDirection.CounterClockwise);
             };
-            
+
             _inputManager.RightClick += async () =>
             {
                 await ExecuteSelect();
                 await TryRotate(RotationDirection.Clockwise);
             };
-            
+
             _inputManager.SwipeLeft += async () => await TryRotate(RotationDirection.CounterClockwise);
-            
+
             _inputManager.SwipeRight += async () => await TryRotate(RotationDirection.Clockwise);
-            
         }
 
 
@@ -120,15 +113,38 @@ namespace Board
             await ExecuteRotation(direction);
         }
 
+        private static readonly List<RaycastResult> RaycastResults = new();
+
+        private bool IsPointerOverInteractiveUI
+        {
+            get
+            {
+                if (EventSystem.current == null) return false;
+                var pointerData = new PointerEventData(EventSystem.current)
+                {
+                    position = Pointer.current.position.value
+                };
+                RaycastResults.Clear();
+                EventSystem.current.RaycastAll(pointerData, RaycastResults);
+                foreach (var result in RaycastResults)
+                {
+                    if (result.gameObject.GetComponentInParent<Selectable>() != null) return true;
+                }
+
+                return false;
+            }
+        }
+
         private async Task ExecuteSelect()
         {
+            if (IsPointerOverInteractiveUI) return;
             var mousePosition = Pointer.current.position.value;
             var clickedDot = _inputHandler.GetDotAtScreenPosition(mousePosition);
 
             if (enableUndo && _commandManager != null && clickedDot != null && !IsRotating)
             {
                 Logger.Log("Clicked on dot");
-                
+
                 var selectCommand = new SelectDotCommand(this, clickedDot);
                 await _commandManager.ExecuteCommand(selectCommand);
             }
@@ -136,21 +152,31 @@ namespace Board
 
         private async Task ExecuteRotation(RotationDirection direction)
         {
+
+            if (IsPointerOverInteractiveUI) return;
             if (SelectedDot?.SquareGroup == null || IsRotating) return;
 
             var rotateCommand = new RotateGroupCommand(SelectedDot.SquareGroup, GridData, direction);
 
+            EventBus<GroupRotateEvent>.Raise(new  GroupRotateEvent(SelectedDot, RotationState.Started, CurrentGridStateSnapshot));
             if (enableUndo && _commandManager != null)
             {
                 IsRotating = true;
-                var success = await _commandManager.ExecuteCommand(rotateCommand);
-                if (success)
+                try
                 {
-                    CompleteRotation();
+                    var success = await _commandManager.ExecuteCommand(rotateCommand);
+                    if (success)
+                    {
+                        CompleteRotation();
+                    }
+                }
+                finally
+                {
+                    IsRotating = false;
                 }
             }
-    
-            EventBus<GroupRotatedEvent>.Raise(new GroupRotatedEvent( SelectedDot, CurrentGridStateSnapshot));
+
+            EventBus<GroupRotateEvent>.Raise(new GroupRotateEvent(SelectedDot, RotationState.Stopped, CurrentGridStateSnapshot));
         }
 
         private void CompleteRotation()
@@ -161,7 +187,7 @@ namespace Board
             _rotationsMade++;
             IsRotating = false;
         }
-        
+
 
         [ContextMenu("Undo Last Action")]
         public async Task UndoLastAction()
@@ -191,30 +217,18 @@ namespace Board
             base.ArrangeSpritesInGrid();
         }
 
-        private void OnCommandExecuted(ICommand command)
-        {
-            Logger.Log($"Command executed: {command.Description}");
-        }
+        private void OnCommandExecuted(ICommand command) { Logger.Log($"Command executed: {command.Description}"); }
 
-        private void OnCommandUndone(ICommand command)
-        {
-            Logger.Log($"Command undone: {command.Description}");
-        }
+        private void OnCommandUndone(ICommand command) { Logger.Log($"Command undone: {command.Description}"); }
 
-        private void OnCommandRedone(ICommand command)
-        {
-            Logger.Log($"Command redone: {command.Description}");
-        }
+        private void OnCommandRedone(ICommand command) { Logger.Log($"Command redone: {command.Description}"); }
 
-        private void OnDisable()
-        {
-            dotManager?.ClearDots();
-        }
+        private void OnDisable() { dotManager?.ClearDots(); }
 
         private void OnDestroy()
         {
             EventBus<LevelLoadedEvent>.Deregister(_levelLoadedEvent);
-            
+
             if (_commandManager == null)
             {
                 return;
@@ -223,10 +237,6 @@ namespace Board
             _commandManager.OnCommandExecuted -= OnCommandExecuted;
             _commandManager.OnCommandUndone -= OnCommandUndone;
             _commandManager.OnCommandRedone -= OnCommandRedone;
-
-
-
-
         }
     }
 }
