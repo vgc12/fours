@@ -1,4 +1,5 @@
-﻿using DependencyInjection;
+﻿using System.Linq;
+using DependencyInjection;
 using EventBus;
 using Levels;
 using TMPro;
@@ -21,9 +22,12 @@ namespace UI.States
         {
             GridParent = gridsObject;
             Background = GridParent.GetComponentInChildren<Image>();
-            BackgroundCanvas = GridParent.GetComponentInChildren<Canvas>();        
+            BackgroundCanvas = GridParent.GetComponentInChildren<Canvas>();
             _levelText = rootElement.GetComponentInChildren<TMP_Text>();
             RuntimeResolver.Instance.TryResolve(out _levelManager);
+
+            var buttons = RootPageElement.GetComponentsInChildren<Button>(true);
+            buttons.First(b => b.name == "pause-button").onClick.AddListener(() => UIManager.SwitchToPaused());
         }
 
         public Image Background { get;  private set; }

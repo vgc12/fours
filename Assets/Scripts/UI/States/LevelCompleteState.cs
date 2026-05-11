@@ -37,8 +37,10 @@ namespace UI
                 }
 
                 _levelManager.LoadLevel(nextLevel);
-                UIManager.SwitchToInGame();
+                UIManager.SwitchToInGame().From(this, SlideFrom.Above, SlideFrom.Above);
             });
+
+            _mainMenuButton.onClick.AddListener(() => UIManager.SwitchToMainMenu());
         }
     }
 }

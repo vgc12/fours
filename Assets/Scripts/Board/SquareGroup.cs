@@ -16,8 +16,16 @@ namespace Board
         public GridIndex TopLeftIndex;
 
 
-        public Vector2 CenterPoint => (TopLeft.transform.position + TopRight.transform.position +
-                                       BottomLeft.transform.position + BottomRight.transform.position) / 4f;
+        public Vector2 CenterPoint
+        {
+            get
+            {
+                if(!TopLeft || !TopRight || !BottomLeft || !BottomRight) return Vector2.zero;
+                return (TopLeft.transform.position + TopRight.transform.position +
+                        BottomLeft.transform.position + BottomRight.transform.position) / 4f;
+            }
+        }
+
         public Square TopLeft;
         public Square TopRight;
         public Square BottomLeft;

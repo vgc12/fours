@@ -63,27 +63,21 @@ namespace Levels
             LoadingInProgress = false;
         }
 
-        public async UniTask LoadLevelAsync(LevelData level)
+        public UniTask LoadLevelAsync(LevelData level)
         {
             if (level == null || playableGrid == null)
             {
                 Debug.LogError("Missing required references!");
-                return;
+                return UniTask.CompletedTask;
             }
             LoadingInProgress = true;
 
             playableGrid.ClearGrid();
             targetGrid.ClearGrid();
 
-            // Do heavy work on thread pool
-            var (targetSquares, initialSquares) = await UniTask.RunOnThreadPool(() =>
-            {
-                var target = level.GetAllSquares(true);
-                var initial = level.GetAllSquares(false);
-                return (target, initial);
-            });
+            var targetSquares = level.GetAllSquares(true);
+            var initialSquares = level.GetAllSquares(false);
 
-            // Back on main thread for Unity calls
             playableGrid.LoadIntoGrid(initialSquares);
             targetGrid.LoadIntoGrid(targetSquares);
 
@@ -101,6 +95,7 @@ namespace Levels
     
             EventBus<LevelLoadedEvent>.Raise(new LevelLoadedEvent(level));
             LoadingInProgress = false;
+            return UniTask.CompletedTask;
         }
 
         private EventBinding<GroupRotateEvent> _groupRotatedBinding;

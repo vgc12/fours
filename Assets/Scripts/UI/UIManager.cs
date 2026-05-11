@@ -209,83 +209,77 @@ namespace UI
 
         #region Public API - State Switching
 
-        public void SwitchToMainMenu() => TransitionToState(_states.MainMenu);
-        public void SwitchToLevelSelect() => TransitionToState(_states.LevelSelect);
+        public UITransitionBuilder SwitchToMainMenu()
+            => new(this, _states.MainMenu, _currentUIState);
 
-        public void SwitchToLevelComplete()
+        public UITransitionBuilder SwitchToLevelSelect()
+            => new(this, _states.LevelSelect, _currentUIState);
+
+        public UITransitionBuilder SwitchToLevelFailed()
+            => new(this, _states.LevelFailed, _currentUIState);
+
+        public UITransitionBuilder SwitchToOptions()
         {
-            if (_states.InGame is not InGameUIState inGameState || _isGroupRotating) return;
-            TransitionToState(_states.LevelComplete,
-                CreateGridTween(inGameState.GridParent.transform, inGameState.GridParent.transform.position, new Vector2(0,10)),
-                CreateBackgroundLevelCompleteTween(inGameState));
+            var builder = new UITransitionBuilder(this, _states.Options, _currentUIState);
+            if (_states.Options == null) builder.Cancel();
+            return builder;
         }
 
-        public void SwitchToLevelFailed() => TransitionToState(_states.LevelFailed);
-        public void SwitchToOptions() => TransitionToState(_states.Options);
+        public UITransitionBuilder SwitchToInGame()
+            => new(this, _states.InGame, _currentUIState, SlideFrom.Below, SlideFrom.Below);
 
-        public void SwitchToPaused()
+        public UITransitionBuilder SwitchToPaused()
         {
-            if (_states.InGame is not InGameUIState inGameState || _isGroupRotating) return;
-            TransitionToState(_states.Paused,
-                CreateGridExitTween(inGameState.GridParent.transform),
-                CreateBackgroundExitTween(inGameState));
+            var builder = new UITransitionBuilder(this, _states.Paused, _currentUIState,
+                                                  SlideFrom.Below, SlideFrom.Below);
+            if (_isGroupRotating) builder.Cancel();
+            return builder;
         }
 
-        public void SwitchToInGame()
+        public UITransitionBuilder SwitchToLevelComplete()
         {
-            if (_states.InGame is not InGameUIState inGameState) return;
-
-            TransitionToState(_states.InGame,
-                CreateGridEntryTween(inGameState.GridParent.transform),
-                CreateBackgroundEntryTween(inGameState));
+            var builder = new UITransitionBuilder(this, _states.LevelComplete, _currentUIState,
+                                                  SlideFrom.Above, SlideFrom.Above);
+            if (_isGroupRotating) builder.Cancel();
+            return builder;
         }
 
-
-        private Tween CreateGridTween(Transform gridParent, Vector2 startValue, Vector2 endValue)
+        internal void ExecuteTransition(UIBaseState target, SlideFrom grid, SlideFrom background)
         {
-            return Tween.Position(
-                gridParent.transform,startValue,
-                endValue,
-                transitionDuration,
-                transitionEase);
+            if (target == null || _currentUIState == target) return;
+
+            var extras = new List<Tween?>();
+
+            if (_states.InGame is InGameUIState inGameState)
+            {
+                var enteringInGame = target == _states.InGame;
+                var leavingInGame = _currentUIState == _states.InGame;
+
+                if (grid != SlideFrom.None && (enteringInGame || leavingInGame))
+                    extras.Add(BuildGridTween(inGameState.GridParent.transform, grid, enteringInGame));
+
+                if (background != SlideFrom.None && (enteringInGame || leavingInGame))
+                    extras.Add(BuildBackgroundTween(inGameState, background, enteringInGame));
+            }
+
+            TransitionToState(target, extras.ToArray());
         }
 
-        private Tween CreateGridEntryTween(Transform gridParent)
+        private Tween BuildGridTween(Transform gridTransform, SlideFrom direction, bool entering)
         {
-            return Tween.Position(
-                gridParent.transform,
-                new Vector3(0, -10),
-                Vector2.zero,
-                transitionDuration,
-                transitionEase);
+            var offPos = new Vector3(0, direction == SlideFrom.Above ? 10f : -10f);
+            var start = entering ? offPos : Vector3.zero;
+            var end = entering ? Vector3.zero : offPos;
+            return Tween.Position(gridTransform, start, end, transitionDuration, transitionEase);
         }
 
-        private Tween CreateGridExitTween(Transform gridParent)
-        {
-            return Tween.Position(
-                gridParent.transform,
-                Vector2.zero,
-                new Vector3(0, -10),
-                transitionDuration,
-                transitionEase);
-        }
-
-
-        private Tween CreateBackgroundLevelCompleteTween(InGameUIState state)
+        private Tween BuildBackgroundTween(InGameUIState state, SlideFrom direction, bool entering)
         {
             var canvasHeight = state.BackgroundCanvas.GetComponent<RectTransform>().rect.height;
-            return SlideOut(state.Background.rectTransform, new Vector2(0, canvasHeight));
-        }
-        private Tween CreateBackgroundEntryTween(InGameUIState state)
-        {
-            var canvasHeight = state.BackgroundCanvas.GetComponent<RectTransform>().rect.height;
-            return SlideIn(state.Background.rectTransform, new Vector2(0, -canvasHeight));
-        }
-
-        private Tween CreateBackgroundExitTween(InGameUIState state)
-        {
-            var canvasHeight = state.BackgroundCanvas.GetComponent<RectTransform>().rect.height;
-            return SlideOut(state.Background.rectTransform, new Vector2(0, -canvasHeight));
+            var offPos = new Vector2(0, direction == SlideFrom.Above ? canvasHeight : -canvasHeight);
+            return entering
+                ? SlideIn(state.Background.rectTransform, offPos)
+                : SlideOut(state.Background.rectTransform, offPos);
         }
 
         #endregion
